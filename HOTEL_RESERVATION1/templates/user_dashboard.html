@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User Dashboard</title>
+<style>
+    body {
+        margin: 0;
+        font-family: 'Poppins', sans-serif;
+        background: radial-gradient(circle at top left, #000, #111);
+        color: #fff;
+        min-height: 100vh;
+        text-align: center;
+    }
+
+    h1 {
+        color: #ffd700;
+        text-shadow: 0 0 10px #d4af37;
+        margin-top: 20px;
+    }
+
+    .rooms-container {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        gap: 15px;
+        padding: 40px;
+        justify-items: center;
+    }
+
+    .room {
+        width: 120px;
+        height: 120px;
+        border-radius: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-weight: bold;
+        color: #fff;
+        cursor: pointer;
+        box-shadow: 0 0 10px #d4af37;
+        transition: 0.3s;
+    }
+
+    .vacant { background: linear-gradient(145deg, #0f0, #060); }
+    .booked { background: linear-gradient(145deg, #900, #600); }
+
+    .room:hover { transform: scale(1.05); box-shadow: 0 0 20px #ffd700; }
+
+    .logout {
+        display: block;
+        width: 200px;
+        text-align: center;
+        margin: 30px auto;
+        padding: 12px;
+        border-radius: 8px;
+        background: linear-gradient(90deg, #d4af37, #ffdf6c);
+        color: #000;
+        font-weight: bold;
+        text-decoration: none;
+        transition: 0.3s;
+    }
+    .logout:hover { box-shadow: 0 0 15px #d4af37; }
+
+    /* Popup form */
+    .popup {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: #111;
+        border: 2px solid #d4af37;
+        box-shadow: 0 0 20px #d4af37;
+        border-radius: 10px;
+        padding: 30px;
+        color: #fff;
+        z-index: 10;
+        width: 300px;
+        text-align: center;
+    }
+
+    .popup input {
+        width: 90%;
+        padding: 8px;
+        border: none;
+        border-radius: 5px;
+        margin: 10px 0;
+        text-align: center;
+        background: #222;
+        color: #fff;
+    }
+
+    .popup button {
+        background: linear-gradient(90deg, #d4af37, #ffdf6c);
+        border: none;
+        padding: 8px 15px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 5px;
+    }
+
+    .popup button:hover { box-shadow: 0 0 15px #d4af37; }
+
+    .overlay {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0,0,0,0.8);
+        z-index: 5;
+    }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+<h1>🏨 Welcome {{ user.name }} | Available Rooms</h1>
+
+<div class="rooms-container">
+    {% set room_numbers = [101,102,103,104,105,201,202,203,204,205,301,302,303,304,305,401,402,403,404,405] %}
+    {% for i in range(20) %}
+        {% set room = rooms[i] %}
+        <div id="room-{{ room.id }}" class="room {{ 'vacant' if room.status=='vacant' else 'booked' }}" 
+             onclick="selectRoom('{{ room.id }}', '{{ room.status }}', '{{ room.check_in }}', '{{ room.check_out }}')">
+            Room {{ room_numbers[i] }}
+            <div style="font-size: 0.8rem; color: #ffd700;">
+                {% if room.check_in and room.check_out %}
+                    <div>Check-In: {{ room.check_in }}</div>
+                    <div>Check-Out: {{ room.check_out }}</div>
+                {% endif %}
+            </div>
+        </div>
+    {% endfor %}
+</div>
+
+<a href="/logout" class="logout">Logout</a>
+
+<div class="overlay" id="overlay" onclick="closePopup()"></div>
+
+<!-- Reserve Form Popup -->
+<div class="popup" id="popup">
+    <h3 style="color:#ffd700;">Reserve Room</h3>
+    <form id="reserveForm">
+        <input type="hidden" name="room_id" id="room_id">
+        <label>Check-In</label><br>
+        <input type="datetime-local" name="check_in" id="check_in" required placeholder="dd/mm/yyyy --:-- --"><br>
+        <label>Check-Out</label><br>
+        <input type="datetime-local" name="check_out" id="check_out" required placeholder="dd/mm/yyyy --:-- --"><br><br>
+        <button type="submit">Reserve</button>
+        <button type="button" onclick="closePopup()">Cancel</button>
+    </form>
+</div>
+
+<script>
+function selectRoom(roomId, status, ci, co){
+    if(status === 'booked'){
+        Swal.fire('⚠️ Room already booked!', '', 'error');
+        return;
+    }
+    document.getElementById('room_id').value = roomId;
+    document.getElementById('check_in').value = ci || '';
+    document.getElementById('check_out').value = co || '';
+    document.getElementById('overlay').style.display = 'block';
+    document.getElementById('popup').style.display = 'block';
+}
+
+function closePopup(){
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('popup').style.display = 'none';
+}
+
+document.getElementById('reserveForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const room_id = document.getElementById('room_id').value;
+    const check_in = document.getElementById('check_in').value;
+    const check_out = document.getElementById('check_out').value;
+
+    fetch('/reserve_room', {
+        method:'POST',
+        headers:{'Content-Type':'application/x-www-form-urlencoded'},
+        body:`room_id=${room_id}&check_in=${check_in}&check_out=${check_out}`
+    })
+    .then(res=>res.json())
+    .then(data=>{
+        closePopup();
+        if(data.status === 'success'){
+            Swal.fire('✅ Room booked successfully!', '', 'success').then(()=> {
+                document.getElementById('room-'+room_id).classList.remove('vacant');
+                document.getElementById('room-'+room_id).classList.add('booked');
+                location.reload(); // Update admin view automatically
+            });
+        } else {
+            Swal.fire('⚠️ Error', data.message, 'error');
+        }
+    })
+    .catch(err=>{
+        closePopup();
+        Swal.fire('⚠️ Error','Could not book room','error');
+    });
+});
+</script>
+</body>
+</html>
