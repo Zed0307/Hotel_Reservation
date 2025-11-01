@@ -8,7 +8,6 @@ from datetime import datetime
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "dev_secret_key")
 
-# MySQL / XAMPP config
 DB_HOST = "localhost"
 DB_USER = "root"
 DB_PASS = ""  
@@ -17,7 +16,6 @@ DB_NAME = "hotel_db"
 def get_db():
     return MySQLdb.connect(host=DB_HOST, user=DB_USER, passwd=DB_PASS, db=DB_NAME, charset='utf8')
 
-# ----------------- Initialize DB -----------------
 def init_db():
     db = get_db()
     cur = db.cursor()
@@ -32,7 +30,6 @@ def init_db():
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;
     """)
-    # Rooms table
     cur.execute("""
     CREATE TABLE IF NOT EXISTS rooms (
         id INT AUTO_INCREMENT PRIMARY KEY,
@@ -46,14 +43,12 @@ def init_db():
     """)
     db.commit()
 
-    # default admin
     cur.execute("SELECT id FROM users WHERE email=%s", ("admin@example.com",))
     if not cur.fetchone():
         cur.execute("INSERT INTO users (name,email,password_hash,is_admin) VALUES (%s,%s,%s,%s)",
                     ("Admin", "admin@example.com", generate_password_hash("admin123"), 1))
         db.commit()
 
-    # Create rooms 101-105, 201-205, 301-305, 401-405, 501-505
     cur.execute("SELECT number FROM rooms")
     existing = set(n for (n,) in cur.fetchall())
     for floor in range(1,6):
@@ -67,7 +62,6 @@ def init_db():
 
 init_db()
 
-# ----------------- Helpers -----------------
 def current_user():
     if 'user_id' in session:
         db = get_db()
@@ -91,7 +85,6 @@ def admin_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# ----------------- Routes -----------------
 @app.route('/')
 def index():
     user = current_user()
@@ -101,7 +94,6 @@ def index():
         return redirect(url_for('user_dashboard'))
     return redirect(url_for('login'))
 
-# ----------------- Login -----------------
 @app.route('/login', methods=['GET','POST'])
 def login():
     if request.method=='POST':
@@ -120,7 +112,6 @@ def login():
         flash("Invalid email or password","danger")
     return render_template('login.html')
 
-# ----------------- Register -----------------
 @app.route('/register', methods=['GET','POST'])
 def register():
     if request.method=='POST':
@@ -152,7 +143,6 @@ def logout():
     flash("Logged out successfully.","info")
     return redirect(url_for('login'))
 
-# ----------------- User Dashboard -----------------
 @app.route('/user')
 def user_dashboard():
     user = current_user()
@@ -185,7 +175,6 @@ def reserve_room():
     check_in = request.form.get('check_in')
     check_out = request.form.get('check_out')
 
-    # validate datetime format
     try:
         ci = datetime.strptime(check_in, "%Y-%m-%dT%H:%M")
         co = datetime.strptime(check_out, "%Y-%m-%dT%H:%M")
@@ -207,7 +196,7 @@ def reserve_room():
         db.close()
         return jsonify({"status":"error","message":"Room already booked"})
     else:
-        # Prevent overlapping reservations
+    
         cur.execute("SELECT check_in,check_out FROM rooms WHERE id=%s",(room_id,))
         existing = cur.fetchone()
         if existing[0] and existing[1]:
@@ -224,7 +213,6 @@ def reserve_room():
         db.close()
         return jsonify({"status":"success","message":"Room booked successfully!"})
 
-# ----------------- Admin Dashboard -----------------
 @app.route('/admin', methods=['GET','POST'])
 @admin_required
 def admin_dashboard():
@@ -233,7 +221,6 @@ def admin_dashboard():
     cur = db.cursor()
 
     if request.method=='POST':
-        # Add/Edit/Delete users and update/release rooms (same as your previous code)
         if 'add_user' in request.form:
             name = request.form.get('name')
             password = request.form.get('password')
@@ -277,7 +264,6 @@ def admin_dashboard():
             db.commit()
             flash("Room released!","info")
 
-    # Load data
     cur.execute("""
         SELECT r.id,r.number,r.status,u.name,r.check_in,r.check_out 
         FROM rooms r LEFT JOIN users u ON r.booked_by=u.id 
@@ -290,7 +276,6 @@ def admin_dashboard():
     db.close()
     return render_template('admin_dashboard.html', admin=user, rooms=rooms, users=users)
 
-# ----------------- API for Admin Auto-Refresh -----------------
 @app.route('/api/rooms')
 @admin_required
 def api_rooms():
@@ -318,3 +303,4 @@ def api_rooms():
 
 if __name__=='__main__':
     app.run(debug=True)
+
