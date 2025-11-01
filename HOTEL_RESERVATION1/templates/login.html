@@ -89,7 +89,6 @@
   <div class="login-container">
     <h2>🏨 Login</h2>
 
-    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -104,7 +103,6 @@
       <button type="submit">Login</button>
     </form>
 
-    <!-- Register link -->
     <a href="/register">Don't have an account? Register</a>
   </div>
 </body>
