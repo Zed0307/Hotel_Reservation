@@ -17,7 +17,6 @@
       align-items: center;
     }
 
-    /* Dark overlay for readability */
     body::before {
       content: "";
       position: fixed;
@@ -127,16 +126,13 @@
 </head>
 <body>
 
-  <!-- HEADER -->
   <header>
      Hotel Reservation System
   </header>
 
-  <!-- LOGIN FORM -->
   <div class="login-container">
     <h2>Login</h2>
 
-    <!-- Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
         {% for category, message in messages %}
@@ -154,7 +150,6 @@
     <a href="/register">Don't have an account? Register</a>
   </div>
 
-  <!-- FOOTER -->
   <footer>
     © 2025 Hotel Reservation System | All Rights Reserved
   </footer>
