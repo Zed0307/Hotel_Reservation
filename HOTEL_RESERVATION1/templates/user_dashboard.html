@@ -1,228 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>User Dashboard</title>
-<style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>User Dashboard</title>
+  <style>
     body {
-        margin: 0;
-        font-family: 'Poppins', sans-serif;
-        background: url("{{ url_for('static', filename='hotel3.jpg') }}") no-repeat center center fixed;
-        background-size: cover;
-        color: #fff;
-        min-height: 100vh;
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background: url("{{ url_for('static', filename='hotel3.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     body::before {
-        content: "";
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0, 0, 0, 0.7);
-        z-index: -1;
-    }
-
-    .welcome {
-        position: absolute;
-        top: 20px;
-        left: 30px;
-        color: #ffd700;
-        font-size: 1.4rem;
-        font-weight: bold;
-        text-shadow: 0 0 10px #d4af37;
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.85);
+      z-index: -1;
     }
 
     h1 {
-        color: #ffd700;
-        text-shadow: 0 0 10px #d4af37;
-        margin-top: 80px;
-        text-align: center;
+      color: #ffd700;
+      text-shadow: 0 0 10px #d4af37;
+      margin-top: 40px;
     }
 
-    .rooms-container {
-        display: grid;
-        grid-template-columns: repeat(5, 1fr);
-        gap: 15px;
-        padding: 40px;
-        justify-items: center;
+    .room-container {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      flex-wrap: wrap;
+      margin-top: 40px;
     }
 
-    .room {
-        width: 120px;
-        height: 120px;
-        border-radius: 15px;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        font-weight: bold;
-        color: #fff;
-        cursor: pointer;
-        box-shadow: 0 0 10px #d4af37;
-        transition: 0.3s;
+    .room-box {
+      background: rgba(20, 20, 20, 0.9);
+      border: 2px solid #d4af37;
+      border-radius: 15px;
+      width: 270px;
+      text-align: center;
+      padding: 20px;
+      box-shadow: 0 0 20px #000;
+      transition: transform 0.3s, box-shadow 0.3s;
     }
 
-    .vacant { background: linear-gradient(145deg, #0f0, #060); }
-    .booked { background: linear-gradient(145deg, #900, #600); }
-    .room:hover { transform: scale(1.05); box-shadow: 0 0 20px #ffd700; }
+    .room-box:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 25px #ffd700;
+    }
+
+    .room-box img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    select, input, button {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    select, input {
+      background: #222;
+      color: #fff;
+    }
+
+    button {
+      background: linear-gradient(90deg, #d4af37, #ffdf6c);
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    button:hover {
+      box-shadow: 0 0 15px #ffd700;
+    }
 
     .logout {
-        display: block;
-        width: 200px;
-        text-align: center;
-        margin: 30px auto;
-        padding: 12px;
-        border-radius: 8px;
-        background: linear-gradient(90deg, #d4af37, #ffdf6c);
-        color: #000;
-        font-weight: bold;
-        text-decoration: none;
-        transition: 0.3s;
+      margin-top: 40px;
+      padding: 10px 25px;
+      background: linear-gradient(90deg, #d4af37, #ffdf6c);
+      border-radius: 8px;
+      text-decoration: none;
+      color: #000;
+      font-weight: bold;
+      transition: 0.3s;
     }
-    .logout:hover { box-shadow: 0 0 15px #d4af37; }
+
+    .logout:hover {
+      box-shadow: 0 0 15px #ffd700;
+    }
 
     .popup {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: #111;
-        border: 2px solid #d4af37;
-        box-shadow: 0 0 20px #d4af37;
-        border-radius: 10px;
-        padding: 30px;
-        color: #fff;
-        z-index: 10;
-        width: 300px;
-        text-align: center;
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: #111;
+      border-radius: 15px;
+      border: 2px solid #d4af37;
+      box-shadow: 0 0 25px #d4af37;
+      padding: 25px 30px;
+      text-align: center;
+      z-index: 100;
+      width: 300px;
+      font-size: 1rem;
+      color: #fff;
     }
 
-    .popup input {
-        width: 90%;
-        padding: 8px;
-        border: none;
-        border-radius: 5px;
-        margin: 10px 0;
-        text-align: center;
-        background: #222;
-        color: #fff;
+    .popup.success {
+      border-color: #28a745;
+      box-shadow: 0 0 25px #28a745;
+      color: #28a745;
+    }
+
+    .popup.error {
+      border-color: #dc3545;
+      box-shadow: 0 0 25px #dc3545;
+      color: #dc3545;
     }
 
     .popup button {
-        background: linear-gradient(90deg, #d4af37, #ffdf6c);
-        border: none;
-        padding: 8px 15px;
-        border-radius: 8px;
-        cursor: pointer;
-        font-weight: bold;
-        margin: 5px;
+      margin-top: 15px;
+      padding: 8px 15px;
+      border: none;
+      border-radius: 6px;
+      background: #d4af37;
+      color: #000;
+      font-weight: bold;
+      cursor: pointer;
     }
-
-    .popup button:hover { box-shadow: 0 0 15px #d4af37; }
-
-    .overlay {
-        display: none;
-        position: fixed;
-        top: 0; left: 0;
-        width: 100%; height: 100%;
-        background: rgba(0,0,0,0.8);
-        z-index: 5;
-    }
-</style>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  </style>
 </head>
 <body>
-<div class="welcome">Welcome {{ user.name }}</div>
+  <h1>Welcome {{ user }}! Choose Your Room Type</h1>
 
-<h1>Available Rooms</h1>
+  <div class="room-container">
+    {% set room_numbers = {
+        'Executive': [101, 201, 301, 401],
+        'Deluxe': [102, 202, 302, 402],
+        'Standard': [103, 203, 303, 403],
+        'Family': [104, 204, 304, 404]
+    } %}
 
-<div class="rooms-container">
-    {% set room_numbers = [101,102,103,104,105,
-                           201,202,203,204,205,
-                           301,302,303,304,305,
-                           401,402,403,404,405,
-                           501,502,503,504,505] %}
-    {% for i in range(25) %}
-        {% set room = rooms[i] %}
-        <div id="room-{{ room.id }}" class="room {{ 'vacant' if room.status=='vacant' else 'booked' }}" 
-             onclick="selectRoom('{{ room.id }}', '{{ room.status }}', '{{ room.check_in }}', '{{ room.check_out }}')">
-            Room {{ room_numbers[i] }}
-            <div style="font-size: 0.8rem; color: #ffd700;">
-                {% if room.check_in and room.check_out %}
-                    <div>Check-In: {{ room.check_in }}</div>
-                    <div>Check-Out: {{ room.check_out }}</div>
-                {% endif %}
-            </div>
-        </div>
+    {% for room_type in ['Executive', 'Deluxe', 'Standard', 'Family'] %}
+      <div class="room-box">
+        <img src="{{ url_for('static', filename=room_type|lower ~ '.jpg') }}" alt="{{ room_type }} Room">
+        <h2>{{ room_type }} Room</h2>
+
+        <form class="bookingForm">
+          <input type="hidden" name="room_type" value="{{ room_type }}">
+
+          <label>Floor & Room:</label>
+          <select name="room_number" required>
+            <option value="" disabled selected>Select Floor & Room</option>
+            {% for room_num in room_numbers[room_type] %}
+              {% set floor = room_num // 100 %}
+              <option value="{{ room_num }}">{{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ room_num }}</option>
+            {% endfor %}
+          </select>
+
+          <label>Check-In:</label>
+          <input type="datetime-local" name="check_in" required>
+
+          <label>Check-Out:</label>
+          <input type="datetime-local" name="check_out" required>
+
+          <button type="submit">Book Room</button>
+        </form>
+      </div>
     {% endfor %}
-</div>
+  </div>
 
-<a href="/logout" class="logout">Logout</a>
+  <a href="{{ url_for('logout') }}" class="logout">Logout</a>
 
-<div class="overlay" id="overlay" onclick="closePopup()"></div>
+  <div class="popup" id="popup">
+    <span id="popupMessage"></span><br>
+    <button onclick="closePopup()">OK</button>
+  </div>
 
-<div class="popup" id="popup">
-    <h3 style="color:#ffd700;">Reserve Room</h3>
-    <form id="reserveForm">
-        <input type="hidden" name="room_id" id="room_id">
-        <label>Check-In</label><br>
-        <input type="datetime-local" name="check_in" id="check_in" required><br>
-        <label>Check-Out</label><br>
-        <input type="datetime-local" name="check_out" id="check_out" required><br><br>
-        <button type="submit">Reserve</button>
-        <button type="button" onclick="closePopup()">Cancel</button>
-    </form>
-</div>
+  <script>
+    const forms = document.querySelectorAll('.bookingForm');
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popupMessage');
 
-<script>
-function selectRoom(roomId, status, ci, co){
-    if(status === 'booked'){
-        Swal.fire('⚠️ Room already booked!', '', 'error');
-        return;
-    }
-    document.getElementById('room_id').value = roomId;
-    document.getElementById('check_in').value = ci || '';
-    document.getElementById('check_out').value = co || '';
-    document.getElementById('overlay').style.display = 'block';
-    document.getElementById('popup').style.display = 'block';
-}
+    forms.forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
 
-function closePopup(){
-    document.getElementById('overlay').style.display = 'none';
-    document.getElementById('popup').style.display = 'none';
-}
-
-document.getElementById('reserveForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    const room_id = document.getElementById('room_id').value;
-    const check_in = document.getElementById('check_in').value;
-    const check_out = document.getElementById('check_out').value;
-
-    fetch('/reserve_room', {
-        method:'POST',
-        headers:{'Content-Type':'application/x-www-form-urlencoded'},
-        body:`room_id=${room_id}&check_in=${check_in}&check_out=${check_out}`
-    })
-    .then(res=>res.json())
-    .then(data=>{
-        closePopup();
-        if(data.status === 'success'){
-            Swal.fire('✅ Room booked successfully!', '', 'success').then(()=> {
-                document.getElementById('room-'+room_id).classList.remove('vacant');
-                document.getElementById('room-'+room_id).classList.add('booked');
-                location.reload();
-            });
-        } else {
-            Swal.fire('⚠️ Error', data.message, 'error');
-        }
-    })
-    .catch(err=>{
-        closePopup();
-        Swal.fire('⚠️ Error','Could not book room','error');
+        const formData = new FormData(form);
+        fetch("{{ url_for('book_room') }}", {
+          method: "POST",
+          body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+          if(data.status === 'success') {
+            popup.className = 'popup success';
+          } else {
+            popup.className = 'popup error';
+          }
+          popupMessage.textContent = data.message;
+          popup.style.display = 'block';
+        })
+        .catch(() => {
+          popup.className = 'popup error';
+          popupMessage.textContent = 'Something went wrong!';
+          popup.style.display = 'block';
+        });
+      });
     });
-});
-</script>
+
+    function closePopup() {
+      popup.style.display = 'none';
+      location.reload();
+    }
+  </script>
 </body>
 </html>
