@@ -14,70 +14,53 @@
             min-height: 100vh;
             position: relative;
         }
-
         body::before {
             content: "";
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.75);
-            z-index: -1;
+            top:0; left:0;
+            width:100%; height:100%;
+            background: rgba(0,0,0,0.75);
+            z-index:-1;
         }
-
         h1 {
             text-align: center;
             color: #ffd700;
             margin-top: 20px;
-            text-shadow: 0 0 15px #d4af37, 0 0 25px #d4af37;
+            text-shadow: 0 0 15px #d4af37;
             font-size: 42px;
         }
-
         .dashboard-container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
+            grid-template-columns: 1fr;
             gap: 30px;
             padding: 40px;
         }
-
         .room-section, .user-section {
-            background: rgba(0, 0, 0, 0.85);
+            background: rgba(0,0,0,0.85);
             border: 2px solid #d4af37;
             border-radius: 15px;
             padding: 20px;
             box-shadow: 0 0 25px #d4af37;
         }
-
-        h2 {
-            color: #ffdf6c;
-            text-align: center;
-            text-shadow: 0 0 10px #d4af37;
-        }
-
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
         }
-
         th, td {
             border: 1px solid #d4af37;
             padding: 10px;
             text-align: center;
         }
-
         th {
             background: #222;
             color: #ffd700;
         }
-
         td {
             background: #111;
         }
-
         .btn {
-            background: linear-gradient(90deg, #d4af37, #ffdf6c);
+            background: linear-gradient(90deg,#d4af37,#ffdf6c);
             color: #000;
             border: none;
             padding: 6px 12px;
@@ -86,22 +69,10 @@
             font-weight: bold;
             transition: 0.3s ease;
         }
-
         .btn:hover {
-            background: linear-gradient(90deg, #ffdf6c, #d4af37);
+            background: linear-gradient(90deg,#ffdf6c,#d4af37);
             box-shadow: 0 0 10px #d4af37;
         }
-
-        input {
-            width: 90%;
-            padding: 5px;
-            border: none;
-            border-radius: 5px;
-            background: #222;
-            color: #fff;
-            text-align: center;
-        }
-
         .logout {
             display: block;
             width: 200px;
@@ -109,97 +80,150 @@
             margin: 40px auto;
             padding: 12px;
             border-radius: 8px;
-            background: linear-gradient(90deg, #d4af37, #ffdf6c);
+            background: linear-gradient(90deg,#d4af37,#ffdf6c);
             color: #000;
             font-weight: bold;
             text-decoration: none;
             transition: 0.3s;
         }
-
         .logout:hover {
             box-shadow: 0 0 20px #d4af37;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
 <body>
-    <h1>Admin Dashboard</h1>
 
-    <div class="dashboard-container">
+<h1>Admin Dashboard</h1>
 
-        <div class="room-section">
-            <h2>Room Management</h2>
-            <table id="rooms-table">
-                <tr>
-                    <th>Room No</th>
-                    <th>Status</th>
-                    <th>Booked By</th>
-                    <th>Check-In</th>
-                    <th>Check-Out</th>
-                    <th>Action</th>
-                </tr>
-                {% for room in rooms %}
-                <tr>
-                    <form action="{{ url_for('admin_dashboard') }}" method="POST">
-                        <td>{{ room[1] }}</td>
-                        <td style="color: {{ 'lime' if room[2]=='vacant' else 'red' }}">{{ room[2]|capitalize }}</td>
-                        <td><input type="text" name="booked_by" value="{{ room[3] if room[3] else '' }}"></td>
-                        <td><input type="datetime-local" name="check_in" value="{{ room[4]|default('') }}"></td>
-                        <td><input type="datetime-local" name="check_out" value="{{ room[5]|default('') }}"></td>
-                        <td>
-                            <button type="submit" name="update_room" value="{{ room[0] }}" class="btn">Save</button>
-                            {% if room[2]=='booked' %}
-                            <button type="submit" name="release_room" value="{{ room[0] }}" class="btn">Release</button>
-                            {% endif %}
-                        </td>
-                    </form>
-                </tr>
-                {% endfor %}
-            </table>
-        </div>
+<div class="dashboard-container">
 
-        <div class="user-section">
-            <h2>User Management</h2>
-            <table>
-                <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Password</th>
-                    <th>Action</th>
-                </tr>
-                {% for user in users %}
-                <tr>
-                    <form action="{{ url_for('admin_dashboard') }}" method="POST">
-                        <td><input type="text" name="name" value="{{ user[1] }}" {% if user[3] %}readonly{% endif %}></td>
-                        <td><input type="text" value="{{ user[2] }}" readonly></td>
-                        <td>
-                            {% if not user[3] %}
-                            <input type="password" name="password" placeholder="New Password">
-                            {% else %}
-                            <input type="password" placeholder="Locked" readonly>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if not user[3] %}
-                            <button type="submit" name="edit_user" value="{{ user[0] }}" class="btn">Save</button>
-                            <button type="submit" name="delete_user" value="{{ user[0] }}" class="btn">Delete</button>
-                            {% else %}
-                            <span style="color:gray;">Locked</span>
-                            {% endif %}
-                        </td>
-                    </form>
-                </tr>
-                {% endfor %}
-            </table>
-
-            <h3 style="color:#ffd700;margin-top:20px;">➕ Add New User</h3>
-            <form action="{{ url_for('admin_dashboard') }}" method="POST" style="text-align:center;">
-                <input type="text" name="name" placeholder="New Username" value=""><br><br>
-                <input type="password" name="password" placeholder="New Password" value=""><br><br>
-                <button type="submit" name="add_user" value="1" class="btn">Add User</button>
-            </form>
-        </div>
+    <!-- Rooms Section -->
+    <div class="room-section">
+        <h2>Room Management</h2>
+        <table>
+            <tr>
+                <th>Room No</th>
+                <th>Status</th>
+                <th>Booked By</th>
+                <th>Check-In</th>
+                <th>Check-Out</th>
+                <th>Action</th>
+            </tr>
+            {% for room in rooms %}
+            <tr>
+                <form class="room-form">
+                    <td>{{ room[1] }}</td>
+                    <td style="color: {{ 'lime' if room[2]=='vacant' else 'red' }}">{{ room[2]|capitalize }}</td>
+                    <td><input type="text" name="booked_by" value="{{ room[3]|default('') }}"></td>
+                    <td><input type="datetime-local" name="check_in" value="{{ room[4]|default('') }}"></td>
+                    <td><input type="datetime-local" name="check_out" value="{{ room[5]|default('') }}"></td>
+                    <td>
+                        <button type="button" class="btn save-btn" data-id="{{ room[0] }}">Save</button>
+                        <button type="button" class="btn delete-btn" data-id="{{ room[0] }}" style="background:#dc3545;color:#fff;">Delete</button>
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </table>
     </div>
 
-    <a href="{{ url_for('logout') }}" class="logout">Logout</a>
+    <!-- Users Section -->
+    <div class="user-section">
+        <h2>User Management</h2>
+        <table>
+            <tr>
+                <th>ID</th><th>Name</th><th>Email</th><th>Admin</th><th>Action</th>
+            </tr>
+            {% for user in users %}
+            <tr>
+                <form class="user-form">
+                    <td>{{ user[0] }}</td>
+                    <td><input type="text" name="name" value="{{ user[1] }}"></td>
+                    <td><input type="text" name="email" value="{{ user[2] }}"></td>
+                    <td>{{ user[3] }}</td>
+                    <td>
+                        <button type="button" class="btn user-save" data-id="{{ user[0] }}">Save</button>
+                        {% if user[3]==0 %}
+                        <button type="button" class="btn user-delete" data-id="{{ user[0] }}" style="background:#dc3545;color:#fff;">Delete</button>
+                        {% endif %}
+                    </td>
+                </form>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <h3>Add New User</h3>
+        <form method="POST" action="{{ url_for('admin_dashboard') }}">
+            <input type="text" name="name" placeholder="Name" required>
+            <input type="email" name="email" placeholder="Email" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" name="add_user" class="btn">Add User</button>
+        </form>
+    </div>
+
+</div>
+
+<a href="{{ url_for('logout') }}" class="logout">Logout</a>
+
+<script>
+    // Delete Booking
+    document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+            const id = btn.dataset.id;
+            const rowForm = btn.closest("form");
+            Swal.fire({
+                title:"Are you sure?",
+                text:`Delete booking for Room ${id}?`,
+                icon:"warning",
+                showCancelButton:true,
+                confirmButtonColor:"#dc3545",
+                cancelButtonColor:"#3085d6",
+                confirmButtonText:"Yes, delete it!"
+            }).then(result => {
+                if(result.isConfirmed){
+                    fetch("{{ url_for('admin_dashboard') }}",{
+                        method:"POST",
+                        body:new URLSearchParams({delete_booking:id})
+                    }).then(res=>res.json()).then(data=>{
+                        if(data.status=="success"){
+                            rowForm.querySelector('input[name="booked_by"]').value="";
+                            rowForm.querySelector('input[name="check_in"]').value="";
+                            rowForm.querySelector('input[name="check_out"]').value="";
+                            rowForm.querySelector('td:nth-child(2)').textContent="Vacant";
+                            rowForm.querySelector('td:nth-child(2)').style.color="lime";
+                            Swal.fire("Deleted!", data.message, "success");
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    // Save Booking
+    document.querySelectorAll(".save-btn").forEach(btn => {
+        btn.addEventListener("click", e => {
+            const rowForm = btn.closest("form");
+            const id = btn.dataset.id;
+            const data = {
+                update_room: id,
+                booked_by: rowForm.querySelector('input[name="booked_by"]').value,
+                check_in: rowForm.querySelector('input[name="check_in"]').value,
+                check_out: rowForm.querySelector('input[name="check_out"]').value
+            };
+            fetch("{{ url_for('admin_dashboard') }}", {
+                method: "POST",
+                body: new URLSearchParams(data)
+            }).then(res=>res.json()).then(data=>{
+                if(data.status=="success"){
+                    rowForm.querySelector('td:nth-child(2)').textContent = data.new_status;
+                    rowForm.querySelector('td:nth-child(2)').style.color = data.new_status=="Vacant"?"lime":"red";
+                    Swal.fire("Updated!", data.message, "success");
+                }
+            });
+        });
+    });
+</script>
+
 </body>
 </html>
