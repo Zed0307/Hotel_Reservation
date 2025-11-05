@@ -98,7 +98,7 @@
 <body>
 
   <div class="register-container">
-    <h2> Create Account</h2>
+    <h2>Create Account</h2>
 
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% if messages %}
@@ -108,8 +108,12 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" action="/register" autocomplete="off">
+    <!-- ✅ Updated and Corrected Registration Form -->
+    <form action="{{ url_for('register') }}" method="POST" autocomplete="off" onsubmit="return validateAge()">
       <input type="text" name="name" placeholder="Full Name" required autocomplete="off">
+      <input type="text" name="address" placeholder="Address" required autocomplete="off">
+      <input type="number" name="age" id="age" placeholder="Age" required min="1" max="120" autocomplete="off">
+      <input type="text" name="contact" placeholder="Contact Number" required pattern="[0-9]{11}" title="Enter 11-digit contact number" autocomplete="off">
       <input type="email" name="email" placeholder="Email" required autocomplete="off">
       <input type="password" name="password" placeholder="Password" required autocomplete="new-password">
       <button type="submit">Register</button>
@@ -117,6 +121,17 @@
 
     <a href="/login">Already have an account? Login</a>
   </div>
+
+  <script>
+    function validateAge() {
+      const age = document.getElementById("age").value;
+      if (age < 18) {
+        alert("You must be at least 18 years old to register.");
+        return false;
+      }
+      return true;
+    }
+  </script>
 
 </body>
 </html>
