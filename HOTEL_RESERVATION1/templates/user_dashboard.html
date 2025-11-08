@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Dashboard</title>
+
+  <!-- Google Font Moonlight -->
+  <link href="https://fonts.googleapis.com/css2?family=Moonlight&display=swap" rel="stylesheet">
+
   <style>
     body {
       margin: 0;
@@ -16,7 +20,6 @@
       flex-direction: column;
       align-items: center;
     }
-
     body::before {
       content: "";
       position: fixed;
@@ -25,13 +28,13 @@
       background: rgba(0, 0, 0, 0.85);
       z-index: -1;
     }
-
     h1 {
+      font-family: 'Moonlight', cursive;
       color: #ffd700;
       text-shadow: 0 0 10px #d4af37;
       margin-top: 40px;
+      font-size: 3rem;
     }
-
     .room-container {
       display: flex;
       justify-content: center;
@@ -39,7 +42,6 @@
       flex-wrap: wrap;
       margin-top: 40px;
     }
-
     .room-box {
       background: rgba(20, 20, 20, 0.9);
       border: 2px solid #d4af37;
@@ -50,20 +52,23 @@
       box-shadow: 0 0 20px #000;
       transition: transform 0.3s, box-shadow 0.3s;
     }
-
     .room-box:hover {
       transform: scale(1.05);
       box-shadow: 0 0 25px #ffd700;
     }
-
     .room-box img {
       width: 100%;
       height: 150px;
       object-fit: cover;
       border-radius: 10px;
       margin-bottom: 15px;
+      cursor: pointer;
     }
-
+    .room-price {
+      margin-bottom: 10px;
+      font-weight: bold;
+      color: #ffd700;
+    }
     select, input, button {
       width: 100%;
       padding: 8px;
@@ -72,12 +77,7 @@
       border-radius: 6px;
       font-size: 1rem;
     }
-
-    select, input {
-      background: #222;
-      color: #fff;
-    }
-
+    select, input { background: #222; color: #fff; }
     button {
       background: linear-gradient(90deg, #d4af37, #ffdf6c);
       color: #000;
@@ -85,11 +85,7 @@
       cursor: pointer;
       transition: 0.3s;
     }
-
-    button:hover {
-      box-shadow: 0 0 15px #ffd700;
-    }
-
+    button:hover { box-shadow: 0 0 15px #ffd700; }
     .logout {
       margin-top: 40px;
       padding: 10px 25px;
@@ -100,11 +96,7 @@
       font-weight: bold;
       transition: 0.3s;
     }
-
-    .logout:hover {
-      box-shadow: 0 0 15px #ffd700;
-    }
-
+    .logout:hover { box-shadow: 0 0 15px #ffd700; }
     .popup {
       display: none;
       position: fixed;
@@ -122,19 +114,8 @@
       font-size: 1rem;
       color: #fff;
     }
-
-    .popup.success {
-      border-color: #28a745;
-      box-shadow: 0 0 25px #28a745;
-      color: #28a745;
-    }
-
-    .popup.error {
-      border-color: #dc3545;
-      box-shadow: 0 0 25px #dc3545;
-      color: #dc3545;
-    }
-
+    .popup.success { border-color: #28a745; box-shadow: 0 0 25px #28a745; color: #28a745; }
+    .popup.error { border-color: #dc3545; box-shadow: 0 0 25px #dc3545; color: #dc3545; }
     .popup button {
       margin-top: 15px;
       padding: 8px 15px;
@@ -145,6 +126,45 @@
       font-weight: bold;
       cursor: pointer;
     }
+
+    .edit-booking-box {
+      background: rgba(20, 20, 20, 0.9);
+      border: 2px solid #d4af37;
+      border-radius: 15px;
+      width: 90%;
+      max-width: 1100px;
+      text-align: center;
+      padding: 25px;
+      box-shadow: 0 0 20px #000;
+      margin-top: 50px;
+    }
+    .edit-booking-box h2 { color: #ffd700; margin-bottom: 20px; }
+    .edit-booking-box form {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      align-items: flex-end;
+    }
+    .edit-booking-box form div {
+      display: flex;
+      flex-direction: column;
+      width: 180px;
+    }
+    @media (max-width: 900px) {
+      .edit-booking-box form { flex-direction: column; align-items: center; }
+      .edit-booking-box form div { width: 90% !important; }
+    }
+
+    .modal { display: none; position: fixed; z-index: 200; padding-top: 80px; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.9);}
+    .modal-content { margin:auto; display:block; width:60%; max-width:700px; border-radius:10px;}
+    .close { position:absolute; top:20px; right:40px; color:#fff; font-size:35px; font-weight:bold; cursor:pointer;}
+    .prev, .next { cursor:pointer; position:absolute; top:50%; width:auto; padding:16px; color:#fff; font-weight:bold; font-size:25px; user-select:none; transition:0.3s; }
+    .prev:hover, .next:hover { color:#ffd700; }
+    .prev { left:20px; } .next { right:20px; }
+    .booked-label { margin-top: 10px; font-weight: bold; color: #28a745; }
+    .btn-warning { background: #ff9800; color: #000; padding: 6px 12px; border-radius: 5px; border: none; cursor: pointer; }
+    .btn-warning:hover { box-shadow: 0 0 10px #ffb74d; }
   </style>
 </head>
 <body>
@@ -152,39 +172,117 @@
 
   <div class="room-container">
     {% set room_numbers = {
-        'Executive': [101, 201, 301, 401],
-        'Deluxe': [102, 202, 302, 402],
-        'Standard': [103, 203, 303, 403],
-        'Family': [104, 204, 304, 404]
+      'Executive': [101, 201, 301, 401, 501],
+      'Deluxe': [102, 202, 302, 402],
+      'Standard': [103, 203, 303, 403],
+      'Family': [104, 204, 304, 404]
+    } %}
+    {% set room_prices = {
+      'Executive': 5000,
+      'Deluxe': 3500,
+      'Standard': 2500,
+      'Family': 4500
     } %}
 
     {% for room_type in ['Executive', 'Deluxe', 'Standard', 'Family'] %}
       <div class="room-box">
-        <img src="{{ url_for('static', filename=room_type|lower ~ '.jpg') }}" alt="{{ room_type }} Room">
+        <img src="{{ url_for('static', filename=room_type|lower ~ '.jpg') }}" 
+             alt="{{ room_type }} Room" 
+             class="gallery-img" 
+             data-type="{{ room_type }}">
         <h2>{{ room_type }} Room</h2>
+        <div class="room-price">
+          Price: ₱{{ "{:,.2f}".format(room_prices[room_type]) }} / night
+        </div>
+
+        {% if user_booking and user_booking.room_type == room_type %}
+          <div class="booked-label">Already Booked: Room {{ user_booking.number }}</div>
+        {% endif %}
 
         <form class="bookingForm">
           <input type="hidden" name="room_type" value="{{ room_type }}">
-
           <label>Floor & Room:</label>
           <select name="room_number" required>
             <option value="" disabled selected>Select Floor & Room</option>
             {% for room_num in room_numbers[room_type] %}
               {% set floor = room_num // 100 %}
-              <option value="{{ room_num }}">{{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ room_num }}</option>
+              <option value="{{ room_num }}" 
+                      {% if user_booking and user_booking.number==room_num %}selected{% endif %}>
+                {{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ room_num }}
+              </option>
             {% endfor %}
           </select>
-
           <label>Check-In:</label>
-          <input type="datetime-local" name="check_in" required>
-
+          <input type="datetime-local" name="check_in" 
+                 {% if user_booking and user_booking.room_type == room_type %} value="{{ user_booking.check_in|replace(' ', 'T') }}" {% endif %} required>
           <label>Check-Out:</label>
-          <input type="datetime-local" name="check_out" required>
-
+          <input type="datetime-local" name="check_out" 
+                 {% if user_booking and user_booking.room_type == room_type %} value="{{ user_booking.check_out|replace(' ', 'T') }}" {% endif %} required>
           <button type="submit">Book Room</button>
         </form>
       </div>
     {% endfor %}
+  </div>
+
+  <!-- Payment Section -->
+  {% if user_booking %}
+    <div class="edit-booking-box" style="margin-top:30px;">
+      <h2>Your Current Booking</h2>
+      <p>Booked Room: {{ user_booking.number }} ({{ user_booking.room_type }})</p>
+      <p>Check-in: {{ user_booking.check_in }}</p>
+      <p>Check-out: {{ user_booking.check_out }}</p>
+      <p>
+        Payment Status: <span id="paymentStatus">{{ user_booking.payment_status }}</span>
+        {% if user_booking.payment_status=='Pending' %}
+          <button onclick="payNow({{ user_booking.id }})" class="btn-warning">Pay Now</button>
+        {% endif %}
+      </p>
+    </div>
+  {% endif %}
+
+  <!-- Edit Booking Section -->
+  <div class="edit-booking-box">
+    <h2>Edit Your Booking</h2>
+    {% if user_booking %}
+      <p style="color:#ffd700;">Price: ₱{{ "{:,.2f}".format(room_prices[user_booking.room_type]) }} per night</p>
+      <form id="editBookingForm">
+        <div>
+          <label>Room Type:</label>
+          <select name="room_type" required>
+            {% for rt in ['Executive','Deluxe','Standard','Family'] %}
+              <option value="{{ rt }}" {% if user_booking.room_type==rt %}selected{% endif %}>{{ rt }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>Floor & Room:</label>
+          <select name="room_number" required>
+            {% for num in room_numbers[user_booking.room_type] %}
+              {% set floor = num // 100 %}
+              <option value="{{ num }}" 
+                      {% if num==user_booking.number %}selected{% endif %}
+                      {% if booked_rooms and num in booked_rooms and num != user_booking.number %}disabled{% endif %}>
+                {{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ num }}
+                {% if booked_rooms and num in booked_rooms and num != user_booking.number %}(Booked){% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label>Check-In:</label>
+          <input type="datetime-local" name="new_check_in" value="{{ user_booking.check_in|replace(' ', 'T') }}" required>
+        </div>
+        <div>
+          <label>Check-Out:</label>
+          <input type="datetime-local" name="new_check_out" value="{{ user_booking.check_out|replace(' ', 'T') }}" required>
+        </div>
+        <div>
+          <button type="submit">Update Booking</button>
+        </div>
+      </form>
+    {% else %}
+      <p style="color:#ffd700;">You have no current bookings.</p>
+    {% endif %}
   </div>
 
   <a href="{{ url_for('logout') }}" class="logout">Logout</a>
@@ -194,42 +292,131 @@
     <button onclick="closePopup()">OK</button>
   </div>
 
+  <div id="galleryModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <img class="modal-content" id="galleryImg">
+    <a class="prev" onclick="changeSlide(-1)">&#10094;</a>
+    <a class="next" onclick="changeSlide(1)">&#10095;</a>
+  </div>
+
   <script>
+    const bookedRooms = {{ booked_rooms | default([]) | tojson }};
+    const roomNumbers = {
+      'Executive': [101, 201, 301, 401, 501],
+      'Deluxe': [102, 202, 302, 402],
+      'Standard': [103, 203, 303, 403],
+      'Family': [104, 204, 304, 404]
+    };
+
+    const editForm = document.getElementById('editBookingForm');
+    if(editForm){
+      const roomTypeSelect = editForm.querySelector('select[name="room_type"]');
+      const roomNumberSelect = editForm.querySelector('select[name="room_number"]');
+      const previousRoom = {{ user_booking.number if user_booking else 'null' }};
+      
+      roomTypeSelect.addEventListener('change', ()=>{
+        const type = roomTypeSelect.value;
+        roomNumberSelect.innerHTML = '';
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Select Floor & Room';
+        placeholder.disabled = true;
+        placeholder.selected = true;
+        roomNumberSelect.appendChild(placeholder);
+
+        roomNumbers[type].forEach(num=>{
+          const option = document.createElement('option');
+          const floor = Math.floor(num/100);
+          const suffix = floor===1?'st':floor===2?'nd':floor===3?'rd':'th';
+          option.value = num;
+          option.textContent = `${floor}${suffix} Floor - Room ${num}`;
+          if(num===previousRoom) option.selected = true;
+          if(bookedRooms.includes(num) && num!==previousRoom){
+            option.disabled = true;
+            option.textContent += " (Booked)";
+          }
+          roomNumberSelect.appendChild(option);
+        });
+      });
+    }
+
     const forms = document.querySelectorAll('.bookingForm');
     const popup = document.getElementById('popup');
     const popupMessage = document.getElementById('popupMessage');
 
     forms.forEach(form => {
-      form.addEventListener('submit', function(e) {
+      form.addEventListener('submit', e=>{
         e.preventDefault();
-
         const formData = new FormData(form);
-        fetch("{{ url_for('book_room') }}", {
-          method: "POST",
-          body: formData
-        })
-        .then(res => res.json())
-        .then(data => {
-          if(data.status === 'success') {
-            popup.className = 'popup success';
-          } else {
-            popup.className = 'popup error';
-          }
+        fetch("{{ url_for('book_room') }}", {method:'POST', body: formData})
+        .then(res=>res.json())
+        .then(data=>{
+          popup.className = data.status==='success'?'popup success':'popup error';
           popupMessage.textContent = data.message;
-          popup.style.display = 'block';
+          popup.style.display='block';
         })
-        .catch(() => {
-          popup.className = 'popup error';
-          popupMessage.textContent = 'Something went wrong!';
-          popup.style.display = 'block';
-        });
+        .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Something went wrong!'; popup.style.display='block'; });
       });
     });
 
-    function closePopup() {
-      popup.style.display = 'none';
-      location.reload();
+    if(editForm){
+      editForm.addEventListener('submit', e=>{
+        e.preventDefault();
+        const formData = new FormData(editForm);
+        fetch("{{ url_for('edit_booking') }}", {method:'POST', body: formData})
+        .then(res=>res.json())
+        .then(data=>{
+          popup.className = data.status==='success'?'popup success':'popup error';
+          popupMessage.textContent = data.message;
+          popup.style.display='block';
+        })
+        .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Error updating booking!'; popup.style.display='block'; });
+      });
     }
+
+    function closePopup(){ popup.style.display='none'; location.reload(); }
+
+    // Pay Now Function
+    function payNow(booking_id){
+      if(confirm("Do you want to pay for this booking?")){
+        fetch("/user_pay_booking", {
+          method: "POST",
+          headers: {"Content-Type":"application/x-www-form-urlencoded"},
+          body: `id=${booking_id}`
+        })
+        .then(res => res.json())
+        .then(resp => {
+          alert(resp.message);
+          if(resp.status === "success"){
+            document.getElementById("paymentStatus").innerText = "Paid";
+          }
+        })
+        .catch(err => console.error(err));
+      }
+    }
+
+    // Gallery modal
+    const modal = document.getElementById('galleryModal');
+    const modalImg = document.getElementById('galleryImg');
+    const galleryImgs = document.querySelectorAll('.gallery-img');
+    const galleryData = {
+      "Executive": ["executive.jpg","executive1.jpg","executive2.jpg","executive3.jpg"],
+      "Deluxe": ["deluxe.jpg","deluxe1.jpg","deluxe2.jpg","deluxe3.jpg"],
+      "Standard": ["standard.jpg","standard1.jpg","standard2.jpg","standard3.jpg"],
+      "Family": ["family.jpg","family1.jpg","family2.jpg","family3.jpg"]
+    };
+    let currentImages=[], currentIndex=0;
+    galleryImgs.forEach(img=>{
+      img.addEventListener('click', ()=>{
+        const type = img.dataset.type;
+        currentImages = galleryData[type].map(i=>"{{ url_for('static', filename='') }}"+i);
+        currentIndex = 0;
+        openModal();
+      });
+    });
+    function openModal(){ modal.style.display="block"; modalImg.src=currentImages[currentIndex]; }
+    function closeModal(){ modal.style.display="none"; }
+    function changeSlide(n){ currentIndex=(currentIndex+n+currentImages.length)%currentImages.length; modalImg.src=currentImages[currentIndex]; }
   </script>
 </body>
 </html>
