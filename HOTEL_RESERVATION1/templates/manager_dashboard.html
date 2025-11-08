@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard</title>
+
+  <!-- Google Font -->
+  <link href="https://fonts.googleapis.com/css2?family=Moonlight&display=swap" rel="stylesheet">
+
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Moonlight', sans-serif;
+      background: url("{{ url_for('static', filename='hotel3.jpg') }}") no-repeat center center fixed;
+      background-size: cover;
+      color: #fff;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8);
+      z-index: -1;
+    }
+
+    .dashboard-header {
+      padding: 20px;
+      text-align: center;
+      background: rgba(0,0,0,0.9);
+      box-shadow: 0 0 25px rgba(0,0,0,0.9);
+    }
+
+    .dashboard-header h2 {
+      margin: 0;
+      font-size: 2.5rem;
+      color: #FFD700;
+      text-shadow: 0 0 10px #FFD700, 0 0 20px #FFD700, 0 0 30px #FFA500;
+    }
+
+    .dashboard-header p {
+      margin: 5px 0 0;
+      font-size: 1.2rem;
+      color: #fff;
+      text-shadow: 0 0 5px #fff;
+    }
+
+    .dashboard-header a {
+      margin-top: 10px;
+      display: inline-block;
+      padding: 8px 16px;
+      background-color: #ff4c4c;
+      color: #fff;
+      text-decoration: none;
+      border-radius: 5px;
+      box-shadow: 0 0 10px #ff4c4c, 0 0 20px #ff4c4c;
+      transition: 0.3s;
+    }
+
+    .dashboard-header a:hover {
+      box-shadow: 0 0 15px #ff0000, 0 0 25px #ff0000;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: rgba(0,0,0,0.95);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 0 25px rgba(255, 215, 0, 0.6);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      box-shadow: 0 0 35px rgba(255, 215, 0, 0.8);
+    }
+
+    .card h5 {
+      margin-bottom: 20px;
+      color: #FFD700;
+      text-shadow: 0 0 5px #FFD700, 0 0 10px #FFA500;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      color: #fff;
+    }
+
+    table th, table td {
+      padding: 10px;
+      border: 1px solid rgba(255, 215, 0, 0.4);
+      text-align: center;
+    }
+
+    table th {
+      background-color: rgba(255, 215, 0, 0.08);
+    }
+
+    .btn {
+      padding: 5px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+      text-shadow: 0 0 3px #000;
+      transition: 0.3s;
+    }
+
+    .btn-warning { background-color: #FFA500; color: #000; box-shadow: 0 0 5px #FFA500; }
+    .btn-warning:hover { box-shadow: 0 0 10px #FFD700; }
+
+    .btn-danger { background-color: #ff4c4c; color: #fff; box-shadow: 0 0 5px #ff4c4c; }
+    .btn-danger:hover { box-shadow: 0 0 10px #ff0000; }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 0; top: 0;
+      width: 100%; height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.85);
+    }
+
+    .modal-content {
+      background: rgba(20,20,20,0.95);
+      margin: 10% auto;
+      padding: 20px;
+      border: 2px solid #FFD700;
+      width: 400px;
+      border-radius: 15px;
+      color: #fff;
+      text-align: center;
+      box-shadow: 0 0 20px #FFD700, 0 0 40px #FFA500;
+      animation: fadeIn 0.5s;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9);}
+      to { opacity: 1; transform: scale(1);}
+    }
+
+    .modal input, .modal select {
+      width: 80%;
+      padding: 8px;
+      margin: 10px 0;
+      border-radius: 8px;
+      border: 1px solid #FFD700;
+      background: #111;
+      color: #fff;
+      text-align: center;
+    }
+
+    .modal button {
+      margin: 10px 5px;
+      padding: 8px 16px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+      box-shadow: 0 0 5px #FFD700;
+      transition: 0.3s;
+    }
+
+    .modal .save-btn {
+      background-color: #FFD700;
+      color: #000;
+    }
+    .modal .save-btn:hover {
+      box-shadow: 0 0 15px #FFD700, 0 0 25px #FFA500;
+    }
+
+    .modal .cancel-btn {
+      background-color: #ff4c4c;
+      color: #fff;
+    }
+    .modal .cancel-btn:hover {
+      box-shadow: 0 0 15px #ff4c4c, 0 0 25px #ff0000;
+    }
+
+    #successPrompt {
+      display: none;
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #0f0f0f;
+      color: #FFD700;
+      border: 2px solid #FFD700;
+      padding: 15px 25px;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      text-align: center;
+      box-shadow: 0 0 15px #FFD700, 0 0 30px #FFA500;
+      z-index: 2000;
+      animation: slideDown 0.5s, fadeOut 0.5s 2.5s forwards;
+    }
+
+    @keyframes slideDown {
+      from { top: -50px; opacity: 0; }
+      to { top: 20px; opacity: 1; }
+    }
+
+    @keyframes fadeOut {
+      to { opacity: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="dashboard-header">
+  <h2>Manager Dashboard</h2>
+  <p>Manage Bookings and Rooms</p>
+  <a href="{{ url_for('logout') }}">Logout</a>
+</div>
+
+<div class="container">
+
+  <!-- Bookings Section -->
+  <div class="card">
+    <h5>All Bookings</h5>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>User</th>
+          <th>Room Type</th>
+          <th>Check-in</th>
+          <th>Check-out</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for booking in bookings %}
+        <tr>
+          <td>{{ booking.room_id }}</td>
+          <td>{{ booking.user_name or 'N/A' }}</td>
+          <td>{{ booking.room_type }}</td>
+          <td>{{ booking.check_in or 'N/A' }}</td>
+          <td>{{ booking.check_out or 'N/A' }}</td>
+          <td>{{ booking.status.capitalize() }}</td>
+          <td>
+            <button class="btn btn-warning"
+              onclick="openEditModal({{ booking.room_id }}, '{{ booking.check_in }}', '{{ booking.check_out }}', '{{ booking.room_type }}', '{{ booking.floor or (booking.room_number // 100) }}', '{{ booking.room_number }}')">
+              Edit
+            </button>
+            <button class="btn btn-danger" onclick="openCancelModal({{ booking.room_id }})">Cancel</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Manager Actions Section -->
+  <div class="card">
+    <h5>Manager Actions</h5>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Manager</th>
+          <th>Action Type</th>
+          <th>Booking ID</th>
+          <th>User ID</th>
+          <th>Description</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for action in manager_actions %}
+        <tr>
+          <td>{{ action.id }}</td>
+          <td>{{ action.manager_name }}</td>
+          <td>{{ action.action_type }}</td>
+          <td>{{ action.booking_id or '-' }}</td>
+          <td>{{ action.user_id or '-' }}</td>
+          <td>{{ action.description or '-' }}</td>
+          <td>{{ action.action_time }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Edit Booking Modal -->
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <h3>Edit Booking</h3>
+    <input type="date" id="modalCheckIn" placeholder="Check-in">
+    <input type="date" id="modalCheckOut" placeholder="Check-out"><br>
+    <select id="modalRoomType" onchange="populateRooms()">
+      <option value="Executive">Executive</option>
+      <option value="Deluxe">Deluxe</option>
+      <option value="Standard">Standard</option>
+      <option value="Family">Family</option>
+    </select>
+    <br>
+    <select id="modalRoomNumber"></select>
+    <br>
+    <button class="save-btn" onclick="saveEdit()">Save</button>
+    <button class="cancel-btn" onclick="closeEditModal()">Cancel</button>
+  </div>
+</div>
+
+<!-- Cancel Booking Modal -->
+<div id="cancelModal" class="modal">
+  <div class="modal-content">
+    <h3>Cancel Booking?</h3>
+    <p>Are you sure you want to cancel this booking?</p>
+    <button class="save-btn" onclick="confirmCancel()">Yes</button>
+    <button class="cancel-btn" onclick="closeCancelModal()">No</button>
+  </div>
+</div>
+
+<!-- Success Prompt -->
+<div id="successPrompt">Action successful!</div>
+
+<script>
+let editingId = null;
+let cancelingId = null;
+let bookedRooms = {};
+
+// Fetch booked rooms
+function fetchBookedRooms() {
+    fetch("/get_booked_rooms")
+        .then(res => res.json())
+        .then(data => bookedRooms = data);
+}
+fetchBookedRooms();
+
+const roomsPerType = {
+  "Executive": [101, 201, 301, 401],
+  "Deluxe": [102, 202, 302, 402],
+  "Standard": [103, 203, 303, 403],
+  "Family": [104, 204, 304, 404]
+};
+
+function openEditModal(id, checkIn, checkOut, roomType, floor, roomNumber) {
+    editingId = id;
+    document.getElementById('modalCheckIn').value = checkIn || '';
+    document.getElementById('modalCheckOut').value = checkOut || '';
+
+    if (!roomType && roomNumber) {
+        for (const type in roomsPerType) {
+            if (roomsPerType[type].includes(parseInt(roomNumber))) {
+                roomType = type;
+                break;
+            }
+        }
+    }
+
+    document.getElementById('modalRoomType').value = roomType || 'Standard';
+    populateRooms(roomNumber);
+    document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() { document.getElementById('editModal').style.display = 'none'; }
+
+function populateRooms(selectedRoom = null) {
+    const type = document.getElementById('modalRoomType').value;
+    const roomSelect = document.getElementById('modalRoomNumber');
+    roomSelect.innerHTML = '';
+
+    roomsPerType[type].forEach(room => {
+        if (bookedRooms[room] && bookedRooms[room] != editingId) return;
+        const option = document.createElement('option');
+        option.value = room;
+        option.textContent = room;
+        if (selectedRoom && parseInt(selectedRoom) === room) option.selected = true;
+        roomSelect.appendChild(option);
+    });
+}
+
+function saveEdit() {
+    const check_in = document.getElementById('modalCheckIn').value;
+    const check_out = document.getElementById('modalCheckOut').value;
+    const room_type = document.getElementById('modalRoomType').value;
+    const room_number = document.getElementById('modalRoomNumber').value;
+
+    if (!check_in || !check_out || !room_number) return alert("Please fill all fields!");
+
+    fetch("/manager_edit_booking", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: `booking_id=${editingId}&new_check_in=${check_in}&new_check_out=${check_out}&new_room_type=${room_type}&new_room_number=${room_number}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        closeEditModal();
+        showSuccessPrompt(data.message);
+        setTimeout(() => location.reload(), 1500);
+    });
+}
+
+function openCancelModal(id) { cancelingId = id; document.getElementById('cancelModal').style.display = 'block'; }
+function closeCancelModal() { document.getElementById('cancelModal').style.display = 'none'; }
+
+function confirmCancel() {
+    fetch("/manager_cancel_booking", {
+        method: "POST",
+        headers: {"Content-Type": "application/x-www-form-urlencoded"},
+        body: `booking_id=${cancelingId}`
+    })
+    .then(res => res.json())
+    .then(data => {
+        closeCancelModal();
+        showSuccessPrompt(data.message);
+        setTimeout(() => location.reload(), 1500);
+    });
+}
+
+function showSuccessPrompt(message) {
+    const prompt = document.getElementById('successPrompt');
+    prompt.textContent = message;
+    prompt.style.display = 'block';
+    setTimeout(() => { prompt.style.display = 'none'; }, 3000);
+}
+
+window.onclick = function(event) {
+    if (event.target === document.getElementById('editModal')) closeEditModal();
+    if (event.target === document.getElementById('cancelModal')) closeCancelModal();
+}
+</script>
+
+</body>
+</html>
