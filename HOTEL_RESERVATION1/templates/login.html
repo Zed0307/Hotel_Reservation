@@ -94,6 +94,25 @@
       outline: 2px solid #ffd700;
     }
 
+    .show-password {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      margin-left: 20px;
+      margin-top: -5px;
+      font-size: 14px;
+      color: #ffd700;
+      user-select: none;
+    }
+
+    .show-password input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      accent-color: #ffd700;
+      cursor: pointer;
+    }
+
     button {
       background: linear-gradient(90deg, #d4af37, #ffdf6c);
       border: none;
@@ -150,7 +169,13 @@
 
     <form method="POST" action="/login" autocomplete="off">
       <input type="email" name="email" placeholder="Email" required autocomplete="off" value="">
-      <input type="password" name="password" placeholder="Password" required autocomplete="new-password" value="">
+      <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password" value="">
+      
+      <div class="show-password">
+        <input type="checkbox" id="togglePassword" onclick="togglePasswordVisibility()">
+        <label for="togglePassword">Show Password</label>
+      </div>
+
       <button type="submit">Login</button>
     </form>
 
@@ -160,6 +185,13 @@
   <footer>
     © 2025 Hotel Reservation System | All Rights Reserved
   </footer>
+
+  <script>
+    function togglePasswordVisibility() {
+      const passwordInput = document.getElementById("password");
+      passwordInput.type = passwordInput.type === "password" ? "text" : "password";
+    }
+  </script>
 
 </body>
 </html>
