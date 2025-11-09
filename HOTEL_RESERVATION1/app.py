@@ -1,5 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import MySQLdb
+import hashlib
 import MySQLdb.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -7,17 +8,32 @@ import os
 app = Flask(__name__)
 app.secret_key = os.environ.get("FLASK_SECRET", "dev_secret_key")
 
-def get_db():
-    return MySQLdb.connect(
-        host="localhost",
+def get_db(database="hotel_db"):
+    db = MySQLdb.connect(
+        host="127.0.0.1",
+        port=3306,
         user="root",
         passwd="",
-        db="hotel_db",
+        charset="utf8",
+        autocommit=True
+    )
+
+    cur = db.cursor()
+    cur.execute(f"CREATE DATABASE IF NOT EXISTS {database} CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;")
+    cur.close()
+    db.close()
+
+    db = MySQLdb.connect(
+        host="127.0.0.1",
+        port=3306,
+        user="root",
+        passwd="",
+        db=database,
         charset="utf8",
         autocommit=False
     )
+    return db
 
-# ---------------- Log Manager Actions ----------------
 def log_manager_action(manager_id, action_type, booking_id=None, user_id=None, description=None):
     db = get_db()
     cur = db.cursor()
@@ -34,7 +50,6 @@ def log_manager_action(manager_id, action_type, booking_id=None, user_id=None, d
         cur.close()
         db.close()
 
-# ---------------- Database Initialization ----------------
 def init_db():
     db = get_db()
     cur = db.cursor()
@@ -49,7 +64,7 @@ def init_db():
         contact VARCHAR(20),
         email VARCHAR(150) UNIQUE,
         password_hash VARCHAR(255) NOT NULL,
-        is_admin TINYINT(1) DEFAULT 0,   -- 0=user, 1=admin, 2=manager
+        is_admin TINYINT(1) DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     ) ENGINE=InnoDB;
     """)
@@ -110,7 +125,7 @@ def init_db():
     cur.execute("SELECT COUNT(*) FROM rooms")
     if cur.fetchone()[0] == 0:
         rooms_dict = {
-            "Executive": [101],
+            "Executive": [101,201,301,401],
             "Deluxe": [102, 202, 302, 402],
             "Standard": [103, 203, 303, 403],
             "Family": [104, 204, 304, 404]
@@ -127,12 +142,10 @@ def init_db():
     cur.close()
     db.close()
 
-# ---------------- Routes ----------------
 @app.route("/")
 def home():
     return redirect(url_for("login"))
 
-# ---------------- Register ----------------
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
@@ -164,43 +177,55 @@ def register():
 
     return render_template("register.html")
 
-# ---------------- Login ----------------
+
 @app.route("/login", methods=["GET","POST"])
 def login():
     if request.method == "POST":
-        email = request.form["email"]
-        password = request.form["password"]
+        email = request.form.get("email").lower()
+        password = request.form.get("password")
 
         db = get_db()
-        cur = db.cursor()
-        cur.execute("SELECT id,name,password_hash,is_admin FROM users WHERE email=%s", (email,))
+        cur = db.cursor(MySQLdb.cursors.DictCursor)
+        cur.execute("SELECT id, name, password_hash, is_admin FROM users WHERE LOWER(email)=%s", (email,))
         user = cur.fetchone()
-        cur.close(); db.close()
+        cur.close()
+        db.close()
 
-        if user and check_password_hash(user[2], password):
-            session["user_id"] = user[0]
-            session["user_name"] = user[1]
-            session["is_admin"] = user[3]
-
-            if user[3] == 1:
-                return redirect(url_for("admin_dashboard"))
-            elif user[3] == 2:
-                return redirect(url_for("manager_dashboard"))
+        if user:
+            # Try check with werkzeug hash first (normal users)
+            if check_password_hash(user['password_hash'], password):
+                valid_password = True
             else:
-                return redirect(url_for("user_dashboard"))
+                # Fallback to MD5 check (admin/manager)
+                password_md5 = hashlib.md5(password.encode()).hexdigest()
+                valid_password = user['password_hash'] == password_md5
+
+            if valid_password:
+                # Set session
+                session["user_id"] = user['id']
+                session["user_name"] = user['name']
+                session["is_admin"] = user['is_admin']
+
+                # Redirect based on role
+                if user['is_admin'] == 1:
+                    return redirect(url_for("admin_dashboard"))
+                elif user['is_admin'] == 2:
+                    return redirect(url_for("manager_dashboard"))
+                else:
+                    return redirect(url_for("user_dashboard"))
+            else:
+                flash("Invalid email or password!", "danger")
         else:
             flash("Invalid email or password!", "danger")
 
     return render_template("login.html")
 
-# ---------------- Logout ----------------
 @app.route("/logout")
 def logout():
     session.clear()
     flash("You have been logged out.", "info")
     return redirect(url_for("login"))
 
-# ---------------- User Dashboard ----------------
 @app.route("/user_dashboard")
 def user_dashboard():
     if "user_id" not in session:
@@ -209,17 +234,14 @@ def user_dashboard():
     db = get_db()
     cur = db.cursor(MySQLdb.cursors.DictCursor)
 
-    # Get all rooms
     cur.execute("SELECT id, number, room_type, floor, status, check_in, check_out, payment_status FROM rooms ORDER BY number")
     rooms = cur.fetchall()
 
-    # Get first booking for user
     cur.execute("SELECT number, room_type, check_in, check_out, payment_status FROM rooms WHERE booked_by=%s ORDER BY number LIMIT 1", (session["user_id"],))
     user_booking = cur.fetchone()
 
     cur.close(); db.close()
 
-    # Group room numbers by type
     room_numbers = {}
     for r in rooms:
         room_numbers.setdefault(r["room_type"], []).append(r["number"])
@@ -231,7 +253,6 @@ def user_dashboard():
         user_booking=user_booking
     )
 
-# ---------------- Book Room ----------------
 @app.route("/book_room", methods=["POST"])
 def book_room():
     if "user_id" not in session:
@@ -270,7 +291,6 @@ def book_room():
 
     return jsonify({"status":"success","message":f"Room {room_number} booked successfully."})
 
-# ---------------- Edit Booking ----------------
 @app.route("/edit_booking", methods=["POST"])
 def edit_booking():
     if "user_id" not in session:
@@ -294,7 +314,6 @@ def edit_booking():
     cur = db.cursor(MySQLdb.cursors.DictCursor)
 
     try:
-        # Check if the new room is already booked by another user
         cur.execute("""
             SELECT * FROM rooms
             WHERE number=%s AND booked_by IS NOT NULL AND booked_by != %s
@@ -303,14 +322,12 @@ def edit_booking():
         if conflict:
             return jsonify({"status": "error", "message": "This room is already booked by another user."})
 
-        # Free old room
         cur.execute("""
             UPDATE rooms
             SET status='vacant', booked_by=NULL, check_in=NULL, check_out=NULL
             WHERE booked_by=%s
         """, (user_id,))
 
-        # Book new room
         cur.execute("""
             UPDATE rooms
             SET room_type=%s, status='booked', booked_by=%s, check_in=%s, check_out=%s
@@ -326,8 +343,7 @@ def edit_booking():
     finally:
         cur.close(); db.close()
 
-# ---------------- Admin Dashboard ----------------
-@app.route("/admin_dashboard", methods=["GET","POST"])
+@app.route("/admin_dashboard")
 def admin_dashboard():
     if "user_id" not in session or session.get("is_admin") != 1:
         flash("Access denied!", "danger")
@@ -355,7 +371,6 @@ def admin_dashboard():
 
     return render_template("admin_dashboard.html", rooms=rooms, users=users)
 
-# ---------------- Admin Update Payment Status ----------------
 @app.route("/admin_update_payment", methods=["POST"])
 def admin_update_payment():
     if "user_id" not in session or session.get("is_admin") != 1:
@@ -379,7 +394,6 @@ def admin_update_payment():
     finally:
         cur.close(); db.close()
 
-# ---------------- Manager Dashboard ----------------
 @app.route("/manager_dashboard")
 def manager_dashboard():
     if "user_id" not in session or session.get("is_admin") != 2:
@@ -389,7 +403,6 @@ def manager_dashboard():
     db = get_db()
     cur = db.cursor(MySQLdb.cursors.DictCursor)
 
-    # Fetch all bookings
     cur.execute("""
         SELECT r.id AS room_id, r.number AS room_number, r.room_type, r.check_in, r.check_out,
                r.status, u.name AS user_name
@@ -399,11 +412,9 @@ def manager_dashboard():
     """)
     bookings = cur.fetchall()
 
-    # Fetch all rooms
     cur.execute("SELECT id, number, room_type, floor, status, check_in, check_out FROM rooms ORDER BY number")
     rooms = cur.fetchall()
 
-    # Fetch all users
     cur.execute("""
         SELECT id, name AS full_name, email, IF(is_admin=1,'Admin',IF(is_admin=2,'Manager','User')) AS role
         FROM users
@@ -411,7 +422,6 @@ def manager_dashboard():
     """)
     users = cur.fetchall()
 
-    # Fetch manager actions
     cur.execute("""
         SELECT ma.id, ma.action_type, ma.booking_id, ma.user_id, ma.description, ma.action_time,
                u.name AS manager_name
@@ -429,7 +439,6 @@ def manager_dashboard():
                            users=users,
                            manager_actions=manager_actions)
 
-# ---------------- Manager Edit Booking ----------------
 @app.route("/manager_edit_booking", methods=["POST"])
 def manager_edit_booking():
     if "user_id" not in session:
@@ -452,7 +461,6 @@ def manager_edit_booking():
         """, (new_check_in, new_check_out, booking_id))
         db.commit()
 
-        # Log action
         log_manager_action(
             manager_id=session["user_id"],
             action_type="edit_booking",
@@ -467,7 +475,6 @@ def manager_edit_booking():
     finally:
         cur.close(); db.close()
 
-# ---------------- Manager Cancel Booking ----------------
 @app.route("/manager_cancel_booking", methods=["POST"])
 def manager_cancel_booking():
     if "user_id" not in session:
@@ -487,7 +494,6 @@ def manager_cancel_booking():
         """, (booking_id,))
         db.commit()
 
-        # Log action
         log_manager_action(
             manager_id=session["user_id"],
             action_type="cancel_booking",
@@ -502,57 +508,51 @@ def manager_cancel_booking():
     finally:
         cur.close(); db.close()
 
-# ---------------- Manager Edit User ----------------
 @app.route("/manager_edit_user", methods=["POST"])
 def manager_edit_user():
     if "user_id" not in session or session.get("is_admin") != 2:
-        return jsonify({"status": "error", "message": "Access denied."})
+        return jsonify({"status":"error","message":"Access denied."})
 
     user_id = request.form.get("user_id")
-    new_name = request.form.get("name")
-    new_email = request.form.get("email")
-    new_role = request.form.get("role")  # 'User', 'Admin', 'Manager'
+    name = request.form.get("name")
+    email = request.form.get("email")
+    contact = request.form.get("contact")
+    age = request.form.get("age")
 
-    if not all([user_id, new_name, new_email, new_role]):
-        return jsonify({"status": "error", "message": "All fields are required."})
-
-    role_map = {"User":0, "Admin":1, "Manager":2}
-    new_role_value = role_map.get(new_role, 0)
+    if not all([user_id, name, email]):
+        return jsonify({"status":"error","message":"User ID, name, and email are required."})
 
     db = get_db()
     cur = db.cursor()
     try:
         cur.execute("""
             UPDATE users
-            SET name=%s, email=%s, is_admin=%s
+            SET name=%s, email=%s, contact=%s, age=%s
             WHERE id=%s
-        """, (new_name, new_email, new_role_value, user_id))
+        """, (name, email, contact, age, user_id))
         db.commit()
 
-        # Log action
         log_manager_action(
             manager_id=session["user_id"],
             action_type="edit_user",
             user_id=user_id,
-            description=f"Updated user info: Name={new_name}, Email={new_email}, Role={new_role}"
+            description=f"Updated user {name} ({email})"
         )
-
-        return jsonify({"status": "success", "message": "User updated successfully."})
+        return jsonify({"status":"success","message":"User updated successfully!"})
     except Exception as e:
         db.rollback()
-        return jsonify({"status": "error", "message": str(e)})
+        return jsonify({"status":"error","message":str(e)})
     finally:
         cur.close(); db.close()
 
-# ---------------- Manager Approve Payment ----------------
 @app.route("/manager_approve_payment", methods=["POST"])
 def manager_approve_payment():
     if "user_id" not in session or session.get("is_admin") != 2:
-        return jsonify({"status": "error", "message": "Access denied."})
+        return jsonify({"status":"error","message":"Access denied."})
 
     room_id = request.form.get("room_id")
     if not room_id:
-        return jsonify({"status": "error", "message": "Room ID required."})
+        return jsonify({"status":"error","message":"Room ID required."})
 
     db = get_db()
     cur = db.cursor()
@@ -564,39 +564,35 @@ def manager_approve_payment():
             manager_id=session["user_id"],
             action_type="approve_payment",
             booking_id=room_id,
-            description="Manager approved payment for this booking."
+            description="Approved payment"
         )
 
-        return jsonify({"status": "success", "message": "Payment approved successfully!"})
+        return jsonify({"status":"success","message":"Payment approved successfully!"})
     except Exception as e:
         db.rollback()
-        return jsonify({"status": "error", "message": str(e)})
+        return jsonify({"status":"error","message":str(e)})
     finally:
         cur.close(); db.close()
 
-# ---------------- User Pay Booking ----------------
 @app.route("/user_pay_booking", methods=["POST"])
 def user_pay_booking():
     if "user_id" not in session:
         return jsonify({"status":"error","message":"Login required."})
 
-    room_id = request.form.get("room_id")
-    if not room_id:
-        return jsonify({"status":"error","message":"Room ID required."})
+    room_number = request.form.get("room_number")
+    if not room_number:
+        return jsonify({"status":"error","message":"Room number required."})
 
     db = get_db()
     cur = db.cursor()
     try:
-        # Ensure this user booked this room
-        cur.execute("SELECT booked_by FROM rooms WHERE id=%s", (room_id,))
-        booked = cur.fetchone()
-        if not booked or booked[0] != session["user_id"]:
-            return jsonify({"status":"error","message":"You did not book this room."})
+        cur.execute("SELECT id, booked_by FROM rooms WHERE number=%s", (room_number,))
+        room = cur.fetchone()
+        if not room or room[1] != session["user_id"]:
+            return jsonify({"status":"error","message":"You cannot pay for this room."})
 
-        # Update payment status
-        cur.execute("UPDATE rooms SET payment_status='Paid' WHERE id=%s", (room_id,))
+        cur.execute("UPDATE rooms SET payment_status='Paid' WHERE number=%s", (room_number,))
         db.commit()
-
         return jsonify({"status":"success","message":"Payment successful!"})
     except Exception as e:
         db.rollback()
@@ -604,7 +600,7 @@ def user_pay_booking():
     finally:
         cur.close(); db.close()
 
-# ---------------- Initialize DB ----------------
+
 if __name__ == "__main__":
     init_db()
     app.run(debug=True)
