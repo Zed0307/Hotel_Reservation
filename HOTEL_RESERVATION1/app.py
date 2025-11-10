@@ -441,72 +441,177 @@ def manager_dashboard():
 
 @app.route("/manager_edit_booking", methods=["POST"])
 def manager_edit_booking():
-    if "user_id" not in session:
-        return jsonify({"status": "error", "message": "Login required."})
+    # ensure manager is logged in
+    if "user_id" not in session or session.get("is_admin") != 2:
+        return jsonify({"status":"error","message":"Access denied."})
 
     booking_id = request.form.get("booking_id")
     new_check_in = request.form.get("new_check_in")
     new_check_out = request.form.get("new_check_out")
+    new_room_type = request.form.get("new_room_type")
+    new_room_number = request.form.get("new_room_number")
 
-    if not all([booking_id, new_check_in, new_check_out]):
-        return jsonify({"status":"error","message":"All fields are required."})
+    if not booking_id:
+        return jsonify({"status":"error","message":"Booking ID required."})
+    if not all([new_check_in, new_check_out]):
+        return jsonify({"status":"error","message":"Check-in and check-out are required."})
 
-    db = get_db()
-    cur = db.cursor()
+    # new room fields are optional if manager only wants to change dates
     try:
-        cur.execute("""
-            UPDATE rooms
-            SET check_in=%s, check_out=%s
-            WHERE id=%s
-        """, (new_check_in, new_check_out, booking_id))
-        db.commit()
+        db = get_db()
+        cur = db.cursor(MySQLdb.cursors.DictCursor)
 
-        log_manager_action(
-            manager_id=session["user_id"],
-            action_type="edit_booking",
-            booking_id=booking_id,
-            description=f"Changed check-in to {new_check_in}, check-out to {new_check_out}"
-        )
+        # get current room record
+        cur.execute("SELECT * FROM rooms WHERE id=%s", (booking_id,))
+        current = cur.fetchone()
+        if not current:
+            return jsonify({"status":"error","message":"Booking not found."})
 
-        return jsonify({"status":"success","message":"Booking updated successfully!"})
+        current_room_number = current["number"]
+        booked_by = current["booked_by"]  # could be null if not booked
+
+        # If manager provided a new room number, handle the room move
+        if new_room_number:
+            try:
+                new_room_number_int = int(new_room_number)
+            except ValueError:
+                return jsonify({"status":"error","message":"Invalid new room number."})
+
+            # fetch target room
+            cur.execute("SELECT * FROM rooms WHERE number=%s", (new_room_number_int,))
+            target = cur.fetchone()
+            if not target:
+                return jsonify({"status":"error","message":"Target room not found."})
+
+            # if target is booked and not by same user -> conflict
+            if target["status"] == "booked" and target["booked_by"] not in (None, booked_by):
+                return jsonify({"status":"error","message":"Target room already booked by another user."})
+
+            # perform move inside try/commit
+            try:
+                # vacate current room (only if current room is different from target)
+                if current_room_number != new_room_number_int:
+                    cur.execute("""
+                        UPDATE rooms
+                        SET status='vacant', booked_by=NULL, check_in=NULL, check_out=NULL, payment_status='Pending'
+                        WHERE number=%s
+                    """, (current_room_number,))
+
+                    # assign target room
+                    cur.execute("""
+                        UPDATE rooms
+                        SET room_type=%s, status='booked', booked_by=%s, check_in=%s, check_out=%s
+                        WHERE number=%s
+                    """, (new_room_type or target["room_type"], booked_by, new_check_in, new_check_out, new_room_number_int))
+                else:
+                    # if same room number, just update room_type/checkin/checkout on that record
+                    cur.execute("""
+                        UPDATE rooms
+                        SET room_type=%s, check_in=%s, check_out=%s
+                        WHERE number=%s
+                    """, (new_room_type or current["room_type"], new_check_in, new_check_out, new_room_number_int))
+
+                db.commit()
+
+            except Exception as e:
+                db.rollback()
+                return jsonify({"status":"error","message":f"DB error while moving room: {str(e)}"})
+
+            # log action
+            log_manager_action(
+                manager_id=session["user_id"],
+                action_type="edit_booking_move",
+                booking_id=booking_id,
+                description=f"Moved booking from {current_room_number} to {new_room_number_int}, set type to {new_room_type}, check_in {new_check_in}, check_out {new_check_out}"
+            )
+
+            return jsonify({"status":"success","message":"Booking moved and updated successfully!"})
+
+        else:
+            # no room change, only update dates and optionally room_type on current record
+            try:
+                cur.execute("""
+                    UPDATE rooms
+                    SET room_type=%s, check_in=%s, check_out=%s
+                    WHERE id=%s
+                """, (new_room_type or current["room_type"], new_check_in, new_check_out, booking_id))
+                db.commit()
+
+                log_manager_action(
+                    manager_id=session["user_id"],
+                    action_type="edit_booking_dates",
+                    booking_id=booking_id,
+                    description=f"Updated check_in to {new_check_in}, check_out to {new_check_out}, room_type => {new_room_type or current['room_type']}"
+                )
+
+                return jsonify({"status":"success","message":"Booking dates updated successfully!"})
+            except Exception as e:
+                db.rollback()
+                return jsonify({"status":"error","message":str(e)})
+
     except Exception as e:
-        db.rollback()
         return jsonify({"status":"error","message":str(e)})
     finally:
-        cur.close(); db.close()
+        try:
+            cur.close()
+            db.close()
+        except:
+            pass
 
 @app.route("/manager_cancel_booking", methods=["POST"])
 def manager_cancel_booking():
-    if "user_id" not in session:
-        return jsonify({"status": "error", "message": "Login required."})
+    # Ensure the manager is logged in
+    if "user_id" not in session or session.get("is_admin") != 2:
+        return jsonify({"status": "error", "message": "Access denied."})
 
     booking_id = request.form.get("booking_id")
+
     if not booking_id:
-        return jsonify({"status":"error","message":"Booking ID required."})
+        return jsonify({"status": "error", "message": "Booking ID required."})
 
     db = get_db()
-    cur = db.cursor()
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
+
     try:
+        # Get the current booking details
+        cur.execute("SELECT * FROM rooms WHERE id=%s", (booking_id,))
+        booking = cur.fetchone()
+
+        if not booking:
+            return jsonify({"status": "error", "message": "Booking not found."})
+
+        if booking["status"] == "vacant":
+            return jsonify({"status": "error", "message": "This room is already vacant."})
+
+        # Free up the room (vacate)
         cur.execute("""
             UPDATE rooms
-            SET booked_by=NULL, check_in=NULL, check_out=NULL, status='vacant', payment_status='Pending'
+            SET status='vacant',
+                booked_by=NULL,
+                check_in=NULL,
+                check_out=NULL
             WHERE id=%s
         """, (booking_id,))
+
         db.commit()
 
+        # Log the manager's action
         log_manager_action(
             manager_id=session["user_id"],
             action_type="cancel_booking",
             booking_id=booking_id,
-            description="Canceled booking"
+            description=f"Cancelled booking for Room {booking['number']} ({booking['room_type']})"
         )
 
-        return jsonify({"status":"success","message":"Booking canceled successfully!"})
+        return jsonify({"status": "success", "message": "Booking cancelled successfully!"})
+
     except Exception as e:
         db.rollback()
-        return jsonify({"status":"error","message":str(e)})
+        return jsonify({"status": "error", "message": str(e)})
+
     finally:
-        cur.close(); db.close()
+        cur.close()
+        db.close()
 
 @app.route("/manager_edit_user", methods=["POST"])
 def manager_edit_user():
@@ -577,28 +682,88 @@ def manager_approve_payment():
 @app.route("/user_pay_booking", methods=["POST"])
 def user_pay_booking():
     if "user_id" not in session:
-        return jsonify({"status":"error","message":"Login required."})
+        return jsonify({"status": "error", "message": "Login required."})
 
+    booking_id = request.form.get("id")
     room_number = request.form.get("room_number")
+    method = request.form.get("method")
+    otp = request.form.get("otp", None)  # Optional for non-cash payments
+
+    if not booking_id:
+        return jsonify({"status": "error", "message": "Booking ID required."})
     if not room_number:
-        return jsonify({"status":"error","message":"Room number required."})
+        return jsonify({"status": "error", "message": "Room number required."})
+    if not method:
+        return jsonify({"status": "error", "message": "Payment method required."})
 
     db = get_db()
-    cur = db.cursor()
-    try:
-        cur.execute("SELECT id, booked_by FROM rooms WHERE number=%s", (room_number,))
-        room = cur.fetchone()
-        if not room or room[1] != session["user_id"]:
-            return jsonify({"status":"error","message":"You cannot pay for this room."})
+    cur = db.cursor(MySQLdb.cursors.DictCursor)
 
-        cur.execute("UPDATE rooms SET payment_status='Paid' WHERE number=%s", (room_number,))
+    # Optionally: Verify OTP if method is not Cash
+    if method.lower() != "cash":
+        # Here you can implement OTP verification logic if stored in session or DB
+        if not otp:
+            return jsonify({"status": "error", "message": "OTP required for this payment method."})
+        # If OTP verification fails:
+        # return jsonify({"status":"error","message":"Invalid OTP!"})
+
+    try:
+        # Update booking with payment and room number
+        cur.execute("""
+            UPDATE bookings 
+            SET payment_status=%s, room_number=%s, payment_method=%s 
+            WHERE id=%s AND user_id=%s
+        """, ("Paid", room_number, method, booking_id, session["user_id"]))
         db.commit()
-        return jsonify({"status":"success","message":"Payment successful!"})
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Database error: {str(e)}"})
+
+    return jsonify({"status": "success", "message": "Payment successful!"})
+
+@app.route("/admin_confirm_payment", methods=["POST"])
+def admin_confirm_payment():
+    if "user_id" not in session:
+        return jsonify({"status":"error", "message":"Login required."})
+    
+    booking_id = request.form.get("id")
+    if not booking_id:
+        return jsonify({"status":"error", "message":"Booking ID is required."})
+    
+    db = get_db()
+    cur = db.cursor()
+    
+    try:
+        # First, check if booking exists
+        cur.execute("SELECT payment_status FROM bookings WHERE room_id=%s", (booking_id,))
+        booking = cur.fetchone()
+        if not booking:
+            return jsonify({"status":"error", "message":"Booking not found."})
+        
+        if booking[0].lower() == "paid":
+            return jsonify({"status":"error", "message":"Payment already confirmed."})
+        
+        # Update payment status
+        cur.execute("UPDATE bookings SET payment_status='Paid', status='Confirmed' WHERE room_id=%s", (booking_id,))
+        db.commit()
+        return jsonify({"status":"success", "message":"Payment confirmed successfully!"})
+    
     except Exception as e:
         db.rollback()
-        return jsonify({"status":"error","message":str(e)})
+        return jsonify({"status":"error", "message": str(e)})
+    
     finally:
-        cur.close(); db.close()
+        cur.close()
+        db.close()
+
+
+
+@app.route("/store_payment_otp", methods=["POST"])
+def store_payment_otp():
+    otp = request.form.get("otp")
+    if otp:
+        session["payment_otp"] = otp
+        return "OTP stored", 200
+    return "No OTP provided", 400
 
 
 if __name__ == "__main__":
