@@ -20,6 +20,7 @@
       flex-direction: column;
       justify-content: center;
       align-items: center;
+      min-height: 100vh;
     }
 
     body::before {
@@ -69,7 +70,7 @@
       box-shadow: 0 0 25px #d4af37;
       width: 360px;
       text-align: center;
-      margin: 140px 0;
+      margin-top: 140px;
     }
 
     h2 {
@@ -97,10 +98,8 @@
     .show-password {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
       gap: 6px;
-      margin-left: 20px;
-      margin-top: -5px;
+      margin-left: 10px;
       font-size: 14px;
       color: #ffd700;
       user-select: none;
@@ -152,9 +151,7 @@
 </head>
 <body>
 
-  <header>
-     Hotel Reservation
-  </header>
+  <header>Hotel Reservation</header>
 
   <div class="login-container">
     <h2>Login</h2>
@@ -167,30 +164,28 @@
       {% endif %}
     {% endwith %}
 
-    <form method="POST" action="/login" autocomplete="off">
-      <input type="email" name="email" placeholder="Email" required autocomplete="off" value="">
-      <input type="password" id="password" name="password" placeholder="Password" required autocomplete="new-password" value="">
+    <form method="POST" action="{{ url_for('login') }}" autocomplete="off">
+      <input type="email" name="email" placeholder="Email" required>
+      <input type="password" id="password" name="password" placeholder="Password" required>
       
       <div class="show-password">
-        <input type="checkbox" id="togglePassword" onclick="togglePasswordVisibility()">
+        <input type="checkbox" id="togglePassword">
         <label for="togglePassword">Show Password</label>
       </div>
 
       <button type="submit">Login</button>
     </form>
 
-    <a href="/register">Don't have an account? Register</a>
+    <a href="{{ url_for('register') }}">Don't have an account? Register</a>
   </div>
 
-  <footer>
-    © 2025 Hotel Reservation System | All Rights Reserved
-  </footer>
+  <footer>© 2025 Hotel Reservation System | All Rights Reserved</footer>
 
   <script>
-    function togglePasswordVisibility() {
+    document.getElementById("togglePassword").addEventListener('change', function() {
       const passwordInput = document.getElementById("password");
-      passwordInput.type = passwordInput.type === "password" ? "text" : "password";
-    }
+      passwordInput.type = this.checked ? "text" : "password";
+    });
   </script>
 
 </body>
