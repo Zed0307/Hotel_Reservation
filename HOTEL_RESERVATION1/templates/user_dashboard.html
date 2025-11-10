@@ -178,7 +178,7 @@
       'Family': [104, 204, 304, 404]
     } %}
     {% set room_prices = {
-      'Executive': 5000,
+      'Executive': 5000,  
       'Deluxe': 3500,
       'Standard': 2500,
       'Family': 4500
@@ -377,23 +377,109 @@
     function closePopup(){ popup.style.display='none'; location.reload(); }
 
     // Pay Now Function
+
     function payNow(booking_id){
-      if(confirm("Do you want to pay for this booking?")){
-        fetch("/user_pay_booking", {
-          method: "POST",
-          headers: {"Content-Type":"application/x-www-form-urlencoded"},
-          body: `id=${booking_id}`
-        })
-        .then(res => res.json())
-        .then(resp => {
-          alert(resp.message);
-          if(resp.status === "success"){
-            document.getElementById("paymentStatus").innerText = "Paid";
-          }
-        })
-        .catch(err => console.error(err));
+  const roomType = "{{ user_booking.room_type }}";
+  const checkIn = new Date("{{ user_booking.check_in }}");
+  const checkOut = new Date("{{ user_booking.check_out }}");
+
+  const prices = { "Executive": 5000, "Deluxe": 3500, "Standard": 2500, "Family": 4500 };
+  const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
+  const total = nights * (prices[roomType] || 0);
+
+  document.getElementById("popupRoomType").innerText = "Room Type: " + roomType;
+  document.getElementById("popupDates").innerText =
+    "Check-in: " + checkIn.toLocaleDateString() + " | Check-out: " + checkOut.toLocaleDateString();
+  document.getElementById("popupNights").innerText = "Nights: " + nights;
+  document.getElementById("popupTotal").innerText = "Total: ₱" + total.toLocaleString();
+
+  const popup = document.getElementById("payPopup");
+  const paymentMethodSelect = document.getElementById("paymentMethod");
+  const authSection = document.getElementById("authSection");
+  const authCodeInput = document.getElementById("authCodeInput");
+  const authMessage = document.getElementById("authMessage");
+  const confirmBtn = document.getElementById("confirmPay");
+
+  let generatedCode = "";
+  let timer;
+
+  function generateOTP(){
+    generatedCode = Math.floor(100000 + Math.random() * 900000);
+    authSection.style.display = "block";
+    authCodeInput.value = "";
+    confirmBtn.disabled = false;
+
+    let timeLeft = 30;
+    authMessage.innerText = `Authentication Code: ${generatedCode} (Expires in ${timeLeft}s)`;
+
+    clearInterval(timer);
+    timer = setInterval(()=>{
+      timeLeft--;
+      if(timeLeft > 0){
+        authMessage.innerText = `Authentication Code: ${generatedCode} (Expires in ${timeLeft}s)`;
+      } else {
+        authMessage.innerText = "Authentication code expired! Select method again.";
+        confirmBtn.disabled = true;
+        clearInterval(timer);
       }
+    }, 1000);
+  }
+
+  // Reset popup
+  paymentMethodSelect.value = "";
+  authSection.style.display = "none";
+  authCodeInput.value = "";
+  confirmBtn.disabled = false;
+
+  popup.style.display = "block";
+
+  paymentMethodSelect.onchange = function(){
+    if(this.value !== "Cash"){
+      generateOTP();
+    } else {
+      authSection.style.display = "none";
+      clearInterval(timer);
+      confirmBtn.disabled = false;
     }
+  };
+
+  confirmBtn.onclick = () => {
+    const method = paymentMethodSelect.value;
+    if(!method){
+      alert("Please select a payment method.");
+      return;
+    }
+    if(method !== "Cash"){
+      const inputCode = authCodeInput.value.trim();
+      if(inputCode !== generatedCode.toString()){
+        alert("Invalid or expired authentication code!");
+        return;
+      }
+      clearInterval(timer);
+    }
+
+    fetch("/user_pay_booking", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `id=${booking_id}&method=${method}`
+    })
+    .then(res => res.json())
+    .then(data => {
+      alert(data.message);
+      if (data.status === "success") {
+        document.getElementById("paymentStatus").innerText = "Paid";
+        popup.style.display = "none";
+      }
+    })
+    .catch(err => console.error(err));
+  };
+
+  document.getElementById("cancelPay").onclick = () => {
+    popup.style.display = "none";
+    clearInterval(timer);
+  };
+}
+
 
     // Gallery modal
     const modal = document.getElementById('galleryModal');
@@ -417,6 +503,261 @@
     function openModal(){ modal.style.display="block"; modalImg.src=currentImages[currentIndex]; }
     function closeModal(){ modal.style.display="none"; }
     function changeSlide(n){ currentIndex=(currentIndex+n+currentImages.length)%currentImages.length; modalImg.src=currentImages[currentIndex]; }
+  
+      <!-- (your existing scripts, functions, etc.) -->
+  </script>
+
+  <!-- ✅ ADD THIS NEW POPUP CODE BELOW -->
+  <div id="payPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
+     background:#111; border:2px solid #d4af37; border-radius:15px; box-shadow:0 0 25px #ffd700;
+     padding:25px; width:350px; color:#fff; z-index:300;">
+  <h3 style="color:#ffd700; text-align:center;">Confirm Payment</h3>
+  <p id="popupRoomType"></p>
+  <p id="popupDates"></p>
+  <p id="popupNights"></p>
+  <p id="popupTotal"></p>
+  
+  <label for="paymentMethod">Select Payment Method:</label>
+  <select id="paymentMethod" style="width:100%; padding:8px; margin:5px 0; border-radius:6px; background:#222; color:#fff;">
+    <option value="" disabled selected>Select Method</option>
+    <option value="Cash">Cash</option>
+    <option value="Gcash">Gcash</option>
+    <option value="Paymaya">Paymaya</option>
+    <option value="Credit Card">Credit Card</option>
+    <option value="Debit Card">Debit Card</option>
+  </select>
+
+  <div id="authSection" style="display:none; margin-top:10px; text-align:center;">
+    <p id="authMessage" style="color:#ffd700; font-weight:bold;">Authentication Code Sent!</p>
+    <input type="text" id="authCodeInput" placeholder="Enter Code" style="padding:6px 10px; border-radius:5px; border:none; width:80%; text-align:center;">
+  </div>
+
+  <div style="text-align:center; margin-top:15px;">
+    <button id="confirmPay" style="background:#ffd700; color:#000; border:none; padding:8px 16px;
+      border-radius:6px; font-weight:bold; cursor:pointer;">Confirm</button>
+    <button id="cancelPay" style="background:#555; color:#fff; border:none; padding:8px 16px;
+      border-radius:6px; margin-left:10px; cursor:pointer;">Cancel</button>
+  </div>
+</div>
+
+
+
+  <script>
+    // ✅ Enhanced Pay Now Popup Script
+    
+let selectedBookingId = null;
+let selectedRoomNumber = null;
+let generatedOTP = null;
+
+function payNow(booking_id, room_number){
+  selectedBookingId = booking_id;
+  selectedRoomNumber = room_number;
+  document.getElementById("payRoomNumber").innerText = room_number;
+  document.getElementById("paymentMethod").value = "Cash";
+  document.getElementById("otpDiv").style.display = "none";
+  document.getElementById("otpInput").value = "";
+  document.getElementById("paymentModal").style.display = "block";
+}
+
+// Show OTP input if method is not cash
+document.getElementById("paymentMethod").addEventListener("change", function(){
+  if(this.value.toLowerCase() !== "cash"){
+    generatedOTP = Math.floor(100000 + Math.random()*900000);
+    alert("Authentication OTP: " + generatedOTP);
+    document.getElementById("otpDiv").style.display = "block";
+  } else {
+    generatedOTP = null;
+    document.getElementById("otpDiv").style.display = "none";
+  }
+});
+
+function closePaymentModal(){
+  document.getElementById("paymentModal").style.display = "none";
+}
+
+function confirmPayment(){
+  const method = document.getElementById("paymentMethod").value;
+  let enteredOTP = document.getElementById("otpInput").value;
+
+  if(method.toLowerCase() !== "cash" && enteredOTP != generatedOTP){
+    return alert("Incorrect OTP!");
+  }
+
+  fetch("/user_pay_booking", {
+    method: "POST",
+    headers: {"Content-Type":"application/x-www-form-urlencoded"},
+    body: `id=${selectedBookingId}&room_number=${selectedRoomNumber}&method=${method}&otp=${enteredOTP||''}`
+  })
+  .then(res => res.json())
+  .then(resp => {
+    alert(resp.message);
+    if(resp.status === "success"){
+      document.getElementById("paymentStatus").innerText = "Paid";
+      location.reload();
+    }
+  })
+  .catch(err => console.error(err));
+
+  closePaymentModal();
+}
+
+// Close modal when clicking outside content
+window.onclick = function(event) {
+  const modal = document.getElementById("paymentModal");
+  if (event.target == modal) {
+    modal.style.display = "none";
+  }
+}
+
+
+  else {
+    // Non-cash: generate OTP
+    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit code
+    const enteredOtp = prompt(`Authentication required!\nYour OTP: ${otp}\nPlease enter the OTP to confirm payment:`);
+
+    if (enteredOtp != otp) {
+      alert("Authentication failed! Payment cancelled.");
+      return;
+    }
+
+    // OTP confirmed, send payment
+    fetch("/user_pay_booking", {
+      method: "POST",
+      headers: {"Content-Type":"application/x-www-form-urlencoded"},
+      body: `id=${booking_id}&method=${method}&room_number={{ user_booking.number }}`
+    })
+    .then(res => res.json())
+    .then(resp => {
+      alert(resp.message);
+      if(resp.status === "success") {
+        document.getElementById("paymentStatus").innerText = "Paid";
+      }
+    })
+    .catch(err => console.error(err));
+  }
+}
+
+<!-- Payment Modal -->
+<div class="popup" id="paymentModal">
+  <h3>Payment</h3>
+  <label for="paymentMethod">Select Payment Method:</label>
+  <select id="paymentMethod">
+    <option value="" disabled selected>Select Method</option>
+    <option value="Cash">Cash</option>
+    <option value="Gcash">Gcash</option>
+    <option value="Paymaya">Paymaya</option>
+    <option value="Credit Card">Credit Card</option>
+    <option value="Debit Card">Debit Card</option>
+  </select>
+  <div id="otpContainer" style="display:none; margin-top:10px;">
+    <label for="otpInput">Enter OTP:</label>
+    <input type="text" id="otpInput" placeholder="6-digit OTP">
+  </div>
+  <button id="confirmPayment">Confirm Payment</button>
+  <button onclick="closePaymentModal()" style="margin-top:5px;">Cancel</button>
+</div>
+
+let currentBookingId = null;
+let currentRoomNumber = null;
+let generatedOTP = null;
+
+// Open modal
+function payNow(booking_id, room_number){
+  currentBookingId = booking_id;
+  currentRoomNumber = room_number;
+
+  document.getElementById("payRoomNumber").innerText = room_number;
+  document.getElementById("paymentMethod").value = "";
+  document.getElementById("otpDiv").style.display = "none";
+  document.getElementById("otpInput").value = "";
+  generatedOTP = null;
+
+  document.getElementById("paymentModal").style.display = "block";
+}
+
+// Close modal
+function closePaymentModal(){
+  document.getElementById("paymentModal").style.display = "none";
+}
+
+// Show OTP if method is not cash
+document.getElementById("paymentMethod").addEventListener("change", function(){
+  if(this.value !== "Cash"){
+    generatedOTP = Math.floor(100000 + Math.random() * 900000);
+    alert("Authentication OTP: " + generatedOTP);
+    document.getElementById("otpDiv").style.display = "block";
+  } else {
+    generatedOTP = null;
+    document.getElementById("otpDiv").style.display = "none";
+  }
+});
+
+// Confirm payment
+function confirmPayment(){
+  const method = document.getElementById("paymentMethod").value;
+  if(!method){
+    alert("Please select a payment method.");
+    return;
+  }
+
+  // If non-cash, verify OTP
+  if(method !== "Cash"){
+    const enteredOTP = document.getElementById("otpInput").value.trim();
+    if(enteredOTP !== generatedOTP.toString()){
+      alert("Invalid OTP! Payment cancelled.");
+      return;
+    }
+  }
+
+  // Send payment request with room number
+  fetch("/user_pay_booking", {
+    method: "POST",
+    headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    body: `id=${currentBookingId}&room_number=${currentRoomNumber}&method=${method}&otp=${generatedOTP||''}`
+  })
+  .then(res => res.json())
+  .then(resp => {
+    alert(resp.message);
+    if(resp.status === "success"){
+      document.getElementById("paymentStatus").innerText = "Paid";
+      location.reload();
+    }
+  })
+  .catch(err => console.error(err));
+
+  closePaymentModal();
+}
+
+function closePaymentModal() {
+  document.getElementById("paymentModal").style.display = "none";
+}
+
+<div id="paymentModal" class="modal">
+  <div class="modal-content" style="background:#111; padding:30px; border-radius:15px; max-width:400px; text-align:center; color:#fff;">
+    <span class="close" onclick="closePaymentModal()">&times;</span>
+    <h2>Confirm Payment</h2>
+    <p>Room Number: <span id="payRoomNumber"></span></p>
+    <label for="paymentMethod">Select Payment Method:</label>
+    <select id="paymentMethod">
+      <option value="" disabled selected>Select Method</option>
+      <option value="Cash">Cash</option>
+      <option value="Gcash">Gcash</option>
+      <option value="Paymaya">Paymaya</option>
+      <option value="Credit Card">Credit Card</option>
+      <option value="Debit Card">Debit Card</option>
+    </select>
+    <div id="otpDiv" style="display:none; margin-top:15px;">
+      <p>Enter OTP:</p>
+      <input type="text" id="otpInput" placeholder="6-digit OTP" style="width:100%; padding:8px; border-radius:6px; border:none; background:#222; color:#fff;">
+    </div>
+    <button style="margin-top:20px; width:100%;" onclick="confirmPayment()">Confirm</button>
+  </div>
+    <button style="margin-top:20px; width:100%;" onclick="confirmPayment()">Confirm</button>
+
+     <button onclick="payNow({{ user_booking.id }}, {{ user_booking.number }})" class="btn-warning">Pay Now</button>
+  </div>
+</div>
+
   </script>
 </body>
 </html>
