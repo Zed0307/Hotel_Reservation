@@ -4,199 +4,91 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>User Dashboard</title>
-
-  <!-- Google Font Moonlight -->
   <link href="https://fonts.googleapis.com/css2?family=Moonlight&display=swap" rel="stylesheet">
-
   <style>
-    body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background: url("{{ url_for('static', filename='hotel3.jpg') }}") no-repeat center center fixed;
-      background-size: cover;
-      color: #fff;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.85);
-      z-index: -1;
-    }
-    h1 {
-      font-family: 'Moonlight', cursive;
-      color: #ffd700;
-      text-shadow: 0 0 10px #d4af37;
-      margin-top: 40px;
-      font-size: 3rem;
-    }
-    .room-container {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      flex-wrap: wrap;
-      margin-top: 40px;
-    }
-    .room-box {
-      background: rgba(20, 20, 20, 0.9);
-      border: 2px solid #d4af37;
-      border-radius: 15px;
-      width: 270px;
-      text-align: center;
-      padding: 20px;
-      box-shadow: 0 0 20px #000;
-      transition: transform 0.3s, box-shadow 0.3s;
-    }
-    .room-box:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 25px #ffd700;
-    }
-    .room-box img {
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      cursor: pointer;
-    }
-    .room-price {
-      margin-bottom: 10px;
-      font-weight: bold;
-      color: #ffd700;
-    }
-    select, input, button {
-      width: 100%;
-      padding: 8px;
-      margin: 5px 0;
-      border: none;
-      border-radius: 6px;
-      font-size: 1rem;
-    }
-    select, input { background: #222; color: #fff; }
-    button {
-      background: linear-gradient(90deg, #d4af37, #ffdf6c);
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    button:hover { box-shadow: 0 0 15px #ffd700; }
-    .logout {
-      margin-top: 40px;
-      padding: 10px 25px;
-      background: linear-gradient(90deg, #d4af37, #ffdf6c);
-      border-radius: 8px;
-      text-decoration: none;
-      color: #000;
-      font-weight: bold;
-      transition: 0.3s;
-    }
-    .logout:hover { box-shadow: 0 0 15px #ffd700; }
-    .popup {
-      display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: #111;
-      border-radius: 15px;
-      border: 2px solid #d4af37;
-      box-shadow: 0 0 25px #d4af37;
-      padding: 25px 30px;
-      text-align: center;
-      z-index: 100;
-      width: 300px;
-      font-size: 1rem;
-      color: #fff;
-    }
-    .popup.success { border-color: #28a745; box-shadow: 0 0 25px #28a745; color: #28a745; }
-    .popup.error { border-color: #dc3545; box-shadow: 0 0 25px #dc3545; color: #dc3545; }
-    .popup button {
-      margin-top: 15px;
-      padding: 8px 15px;
-      border: none;
-      border-radius: 6px;
-      background: #d4af37;
-      color: #000;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    .edit-booking-box {
-      background: rgba(20, 20, 20, 0.9);
-      border: 2px solid #d4af37;
-      border-radius: 15px;
-      width: 90%;
-      max-width: 1100px;
-      text-align: center;
-      padding: 25px;
-      box-shadow: 0 0 20px #000;
-      margin-top: 50px;
-    }
-    .edit-booking-box h2 { color: #ffd700; margin-bottom: 20px; }
-    .edit-booking-box form {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 20px;
-      align-items: flex-end;
-    }
-    .edit-booking-box form div {
-      display: flex;
-      flex-direction: column;
-      width: 180px;
-    }
-    @media (max-width: 900px) {
-      .edit-booking-box form { flex-direction: column; align-items: center; }
-      .edit-booking-box form div { width: 90% !important; }
-    }
-
-    .modal { display: none; position: fixed; z-index: 200; padding-top: 80px; left:0; top:0; width:100%; height:100%; background: rgba(0,0,0,0.9);}
-    .modal-content { margin:auto; display:block; width:60%; max-width:700px; border-radius:10px;}
-    .close { position:absolute; top:20px; right:40px; color:#fff; font-size:35px; font-weight:bold; cursor:pointer;}
-    .prev, .next { cursor:pointer; position:absolute; top:50%; width:auto; padding:16px; color:#fff; font-weight:bold; font-size:25px; user-select:none; transition:0.3s; }
-    .prev:hover, .next:hover { color:#ffd700; }
-    .prev { left:20px; } .next { right:20px; }
-    .booked-label { margin-top: 10px; font-weight: bold; color: #28a745; }
-    .btn-warning { background: #ff9800; color: #000; padding: 6px 12px; border-radius: 5px; border: none; cursor: pointer; }
-    .btn-warning:hover { box-shadow: 0 0 10px #ffb74d; }
+    /* =====  YOUR EXACT STYLES  ===== */
+    body{margin:0;font-family:'Poppins',sans-serif;background:url("{{ url_for('static',filename='hotel3.jpg') }}") no-repeat center center fixed;background-size:cover;color:#fff;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+    body::before{content:"";position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);z-index:-1}
+    h1{font-family:'Moonlight',cursive;color:#ffd700;text-shadow:0 0 10px #d4af37;margin-top:40px;font-size:3rem}
+    .room-container{display:flex;justify-content:center;gap:30px;flex-wrap:wrap;margin-top:40px}
+    .room-box{background:rgba(20,20,20,.9);border:2px solid #d4af37;border-radius:15px;width:270px;text-align:center;padding:20px;box-shadow:0 0 20px #000;transition:transform .3s,box-shadow .3s}
+    .room-box:hover{transform:scale(1.05);box-shadow:0 0 25px #ffd700}
+    .room-box img{width:100%;height:150px;object-fit:cover;border-radius:10px;margin-bottom:15px;cursor:pointer}
+    .room-price{margin-bottom:10px;font-weight:bold;color:#ffd700}
+    select,input,button{width:100%;padding:8px;margin:5px 0;border:none;border-radius:6px;font-size:1rem}
+    select,input{background:#222;color:#fff}
+    button{background:linear-gradient(90deg,#d4af37,#ffdf6c);color:#000;font-weight:bold;cursor:pointer;transition:.3s}
+    button:hover{box-shadow:0 0 15px #ffd700}
+    .logout{margin-top:40px;padding:10px 25px;background:linear-gradient(90deg,#d4af37,#ffdf6c);border-radius:8px;text-decoration:none;color:#000;font-weight:bold;transition:.3s}
+    .logout:hover{box-shadow:0 0 15px #ffd700}
+    .popup{display:none;position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#111;border-radius:15px;border:2px solid #d4af37;box-shadow:0 0 25px #d4af37;padding:25px 30px;text-align:center;z-index:100;width:300px;font-size:1rem;color:#fff}
+    .popup.success{border-color:#28a745;box-shadow:0 0 25px #28a745;color:#28a745}
+    .popup.error{border-color:#dc3545;box-shadow:0 0 25px #dc3545;color:#dc3545}
+    .popup button{margin-top:15px;padding:8px 15px;border:none;border-radius:6px;background:#d4af37;color:#000;font-weight:bold;cursor:pointer}
+    .edit-booking-box{background:rgba(20,20,20,.9);border:2px solid #d4af37;border-radius:15px;width:90%;max-width:1100px;text-align:center;padding:25px;box-shadow:0 0 20px #000;margin-top:50px}
+    .edit-booking-box h2{color:#ffd700;margin-bottom:20px}
+    .edit-booking-box form{display:flex;flex-wrap:wrap;justify-content:center;gap:20px;align-items:flex-end}
+    .edit-booking-box form div{display:flex;flex-direction:column;width:180px}
+    @media(max-width:900px){.edit-booking-box form{flex-direction:column;align-items:center}.edit-booking-box form div{width:90%!important}}
+    .modal{display:none;position:fixed;z-index:200;padding-top:80px;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,.9)}
+    .modal-content{margin:auto;display:block;width:60%;max-width:700px;border-radius:10px}
+    .close{position:absolute;top:20px;right:40px;color:#fff;font-size:35px;font-weight:bold;cursor:pointer}
+    .prev,.next{cursor:pointer;position:absolute;top:50%;width:auto;padding:16px;color:#fff;font-weight:bold;font-size:25px;user-select:none;transition:.3s}
+    .prev:hover,.next:hover{color:#ffd700}
+    .prev{left:20px}.next{right:20px}
+    .booked-label{margin-top:10px;font-weight:bold;color:#28a745}
+    .payNowBtn{background:#28a745;color:#000;padding:6px 12px;border-radius:5px;border:none;cursor:pointer;margin-top:10px}
+    .payNowBtn:hover{box-shadow:0 0 10px #28a745}
+    .otp-modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);z-index:999;display:none;align-items:center;justify-content:center}
+    .otp-modal{background:linear-gradient(145deg,#1a1a1a,#000);border:2px solid #FFD700;border-radius:20px;padding:35px 45px;text-align:center;box-shadow:0 0 30px #FFD700,0 0 60px rgba(255,215,0,.4);max-width:380px;animation:popIn .35s ease-out}
+    @keyframes popIn{0%{transform:scale(.7);opacity:0}100%{transform:scale(1);opacity:1}}
+    .otp-modal h4{margin:0 0 12px;font-size:1.6rem;color:#FFD700;text-shadow:0 0 8px #FFD700}
+    .otp-modal p{margin:0 0 20px;color:#eee;font-size:1rem}
+    .otp-modal input{width:100%;padding:10px;border-radius:8px;border:1px solid #FFD700;background:#222;color:#fff;text-align:center;font-size:1.1rem;letter-spacing:4px}
+    .otp-modal-buttons{display:flex;gap:15px;justify-content:center;margin-top:20px}
+    .otp-modal-buttons button{padding:10px 25px;border:none;border-radius:8px;font-weight:bold;cursor:pointer;transition:.25s}
+    .btn-otp-ok{background:#28a745;color:#fff;box-shadow:0 0 8px #28a745}
+    .btn-otp-ok:hover{box-shadow:0 0 15px #00ff77}
+    .btn-otp-cancel{background:#444;color:#fff;box-shadow:0 0 5px #666}
+    .btn-otp-cancel:hover{background:#555}
+    #otpCodeBox{background:#000;border:2px solid #FFD700;border-radius:8px;padding:10px;margin-bottom:15px;font-size:1.4rem;letter-spacing:4px;color:#FFD700;text-shadow:0 0 8px #FFD700}
+    #otpTimer{font-size:.9rem;color:#eee;margin-top:6px}
+    /* =====  DELETE BUTTON  ===== */
+    .deleteBtn{background:linear-gradient(90deg,#dc3545,#ff6b6b);margin-top:10px}
+    .deleteBtn:hover{box-shadow:0 0 15px #dc3545}
   </style>
 </head>
 <body>
   <h1>Welcome {{ user }}! Choose Your Room Type</h1>
 
   <div class="room-container">
-    {% set room_numbers = {
-      'Executive': [101, 201, 301, 401, 501],
-      'Deluxe': [102, 202, 302, 402],
-      'Standard': [103, 203, 303, 403],
-      'Family': [104, 204, 304, 404]
-    } %}
-    {% set room_prices = {
-      'Executive': 5000,  
-      'Deluxe': 3500,
-      'Standard': 2500,
-      'Family': 4500
-    } %}
-
-    {% for room_type in ['Executive', 'Deluxe', 'Standard', 'Family'] %}
+    {% set room_numbers = {'Executive':[101,201,301,401,501],'Deluxe':[102,202,302,402],'Standard':[103,203,303,403],'Family':[104,204,304,404]} %}
+    {% set room_prices   = {'Executive':5000,'Deluxe':3500,'Standard':2500,'Family':4500} %}
+    {% for room_type in ['Executive','Deluxe','Standard','Family'] %}
       <div class="room-box">
-        <img src="{{ url_for('static', filename=room_type|lower ~ '.jpg') }}" 
-             alt="{{ room_type }} Room" 
-             class="gallery-img" 
-             data-type="{{ room_type }}">
+        <img src="{{ url_for('static',filename=room_type|lower~'.jpg') }}" alt="{{ room_type }} Room" class="gallery-img" data-type="{{ room_type }}">
         <h2>{{ room_type }} Room</h2>
-        <div class="room-price">
-          Price: ₱{{ "{:,.2f}".format(room_prices[room_type]) }} / night
-        </div>
+        <div class="room-price">Price: ₱{{ "{:,.2f}".format(room_prices[room_type]) }} / night</div>
 
         {% if user_booking and user_booking.room_type == room_type %}
-          <div class="booked-label">Already Booked: Room {{ user_booking.number }}</div>
+          <div class="booked-label">
+            {% if user_booking.payment_status.lower() == 'paid' %}✅ Paid – Room {{ user_booking.number }}
+            {% else %}Already Booked: Room {{ user_booking.number }}{% endif %}
+          </div>
+          {% if user_booking.payment_status.lower() == 'paid' %}
+            <button class="bookAnotherBtn" onclick="bookAnother()">Book Another Room</button>
+          {% else %}
+            <select class="payment-method" id="paymentMethod">
+              <option value="" disabled selected>Select Payment Method</option>
+              <option value="cash">Cash (No OTP)</option>
+              <option value="gcash">GCash (OTP required)</option>
+              <option value="paymaya">PayMaya (OTP required)</option>
+              <option value="debit">Debit Card (OTP required)</option>
+              <option value="credit">Credit Card (OTP required)</option>
+            </select>
+            <input type="text" name="otp" id="otpInput" placeholder="Enter OTP" style="display:none;">
+            <button class="payNowBtn">Pay Now</button>
+          {% endif %}
         {% endif %}
 
         <form class="bookingForm">
@@ -206,41 +98,20 @@
             <option value="" disabled selected>Select Floor & Room</option>
             {% for room_num in room_numbers[room_type] %}
               {% set floor = room_num // 100 %}
-              <option value="{{ room_num }}" 
-                      {% if user_booking and user_booking.number==room_num %}selected{% endif %}>
-                {{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ room_num }}
-              </option>
+              <option value="{{ room_num }}" {% if user_booking and user_booking.number==room_num %}selected{% endif %}>{{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ room_num }}</option>
             {% endfor %}
           </select>
           <label>Check-In:</label>
-          <input type="datetime-local" name="check_in" 
-                 {% if user_booking and user_booking.room_type == room_type %} value="{{ user_booking.check_in|replace(' ', 'T') }}" {% endif %} required>
+          <input type="datetime-local" name="check_in"  {% if user_booking and user_booking.room_type == room_type %}value="{{ user_booking.check_in|replace(' ','T') }}"{% endif %} required>
           <label>Check-Out:</label>
-          <input type="datetime-local" name="check_out" 
-                 {% if user_booking and user_booking.room_type == room_type %} value="{{ user_booking.check_out|replace(' ', 'T') }}" {% endif %} required>
+          <input type="datetime-local" name="check_out" {% if user_booking and user_booking.room_type == room_type %}value="{{ user_booking.check_out|replace(' ','T') }}"{% endif %} required>
           <button type="submit">Book Room</button>
         </form>
       </div>
     {% endfor %}
   </div>
 
-  <!-- Payment Section -->
-  {% if user_booking %}
-    <div class="edit-booking-box" style="margin-top:30px;">
-      <h2>Your Current Booking</h2>
-      <p>Booked Room: {{ user_booking.number }} ({{ user_booking.room_type }})</p>
-      <p>Check-in: {{ user_booking.check_in }}</p>
-      <p>Check-out: {{ user_booking.check_out }}</p>
-      <p>
-        Payment Status: <span id="paymentStatus">{{ user_booking.payment_status }}</span>
-        {% if user_booking.payment_status=='Pending' %}
-          <button onclick="payNow({{ user_booking.id }})" class="btn-warning">Pay Now</button>
-        {% endif %}
-      </p>
-    </div>
-  {% endif %}
-
-  <!-- Edit Booking Section -->
+  <!--  EDIT / DELETE  -->
   <div class="edit-booking-box">
     <h2>Edit Your Booking</h2>
     {% if user_booking %}
@@ -259,25 +130,25 @@
           <select name="room_number" required>
             {% for num in room_numbers[user_booking.room_type] %}
               {% set floor = num // 100 %}
-              <option value="{{ num }}" 
-                      {% if num==user_booking.number %}selected{% endif %}
-                      {% if booked_rooms and num in booked_rooms and num != user_booking.number %}disabled{% endif %}>
+              <option value="{{ num }}" {% if num==user_booking.number %}selected{% endif %}
+                {% if booked_rooms and num in booked_rooms and num != user_booking.number %}disabled{% endif %}>
                 {{ floor }}{{ 'st' if floor==1 else 'nd' if floor==2 else 'rd' if floor==3 else 'th' }} Floor - Room {{ num }}
-                {% if booked_rooms and num in booked_rooms and num != user_booking.number %}(Booked){% endif %}
+                {% if booked_rooms and num in booked_rooms and num != user_booking.number %} (Booked){% endif %}
               </option>
             {% endfor %}
           </select>
         </div>
         <div>
           <label>Check-In:</label>
-          <input type="datetime-local" name="new_check_in" value="{{ user_booking.check_in|replace(' ', 'T') }}" required>
+          <input type="datetime-local" name="new_check_in" value="{{ user_booking.check_in|replace(' ','T') }}" required>
         </div>
         <div>
           <label>Check-Out:</label>
-          <input type="datetime-local" name="new_check_out" value="{{ user_booking.check_out|replace(' ', 'T') }}" required>
+          <input type="datetime-local" name="new_check_out" value="{{ user_booking.check_out|replace(' ','T') }}" required>
         </div>
         <div>
           <button type="submit">Update Booking</button>
+          <button type="button" class="deleteBtn" onclick="deleteBooking()">Delete Booking</button>
         </div>
       </form>
     {% else %}
@@ -287,11 +158,13 @@
 
   <a href="{{ url_for('logout') }}" class="logout">Logout</a>
 
+  <!-- POPUP -->
   <div class="popup" id="popup">
     <span id="popupMessage"></span><br>
     <button onclick="closePopup()">OK</button>
   </div>
 
+  <!-- GALLERY MODAL -->
   <div id="galleryModal" class="modal">
     <span class="close" onclick="closeModal()">&times;</span>
     <img class="modal-content" id="galleryImg">
@@ -299,465 +172,166 @@
     <a class="next" onclick="changeSlide(1)">&#10095;</a>
   </div>
 
+  <!-- OTP MODAL -->
+  <div id="otpModalOverlay" class="otp-modal-overlay">
+    <div class="otp-modal">
+      <h4>Enter OTP</h4>
+      <div id="otpCodeBox">------</div>
+      <div id="otpTimer"></div>
+      <input type="text" id="otpModalInput" maxlength="6" placeholder="123456">
+      <div class="otp-modal-buttons">
+        <button class="btn-otp-ok" onclick="submitOtpFromModal()">Confirm</button>
+        <button class="btn-otp-cancel" onclick="closeOtpModal()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     const bookedRooms = {{ booked_rooms | default([]) | tojson }};
-    const roomNumbers = {
-      'Executive': [101, 201, 301, 401, 501],
-      'Deluxe': [102, 202, 302, 402],
-      'Standard': [103, 203, 303, 403],
-      'Family': [104, 204, 304, 404]
-    };
+    const roomNumbers = {'Executive':[101,201,301,401,501],'Deluxe':[102,202,302,402],'Standard':[103,203,303,403],'Family':[104,204,304,404]};
 
+    /* ===== 30-second OTP timer ===== */
+    let otpTimerInterval;
+    const otpCodeBox = document.getElementById('otpCodeBox');
+    const otpTimer   = document.getElementById('otpTimer');
+    function startOtpCountdown(sec){
+      let t = sec;
+      otpTimer.textContent = `Valid for ${t} s`;
+      otpTimerInterval = setInterval(()=>{
+        t--;
+        otpTimer.textContent = `Valid for ${t} s`;
+        if(t<=0){
+          clearInterval(otpTimerInterval);
+          otpCodeBox.textContent = '------';
+          otpTimer.textContent = 'OTP expired – request a new one';
+        }
+      },1000);
+    }
+    function closeOtpModal(){
+      document.getElementById('otpModalOverlay').style.display='none';
+      clearInterval(otpTimerInterval);
+    }
+    function submitOtpFromModal(){
+      const otp = document.getElementById('otpModalInput').value.trim();
+      if(otp.length!==6){alert('Please enter the full 6-digit OTP');return;}
+      closeOtpModal();
+      document.getElementById('otpInput').value=otp;
+      document.querySelector('.payNowBtn').click();
+    }
+
+    /* ---- POPUP ---- */
+    const popup = document.getElementById('popup');
+    const popupMessage = document.getElementById('popupMessage');
+    function closePopup(){ popup.style.display='none'; location.reload(); }
+
+    /* ---- BOOKING FORM ---- */
+    document.querySelectorAll('.bookingForm').forEach(form=>{
+      form.addEventListener('submit',e=>{
+        e.preventDefault();
+        fetch("{{ url_for('book_room') }}",{method:'POST',body:new FormData(form)})
+          .then(r=>r.json())
+          .then(d=>{ popup.className=d.status==='success'?'popup success':'popup error'; popupMessage.textContent=d.message; popup.style.display='block'; })
+          .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Booking failed!'; popup.style.display='block'; });
+      });
+    });
+
+    /* ---- EDIT FORM ---- */
     const editForm = document.getElementById('editBookingForm');
     if(editForm){
       const roomTypeSelect = editForm.querySelector('select[name="room_type"]');
       const roomNumberSelect = editForm.querySelector('select[name="room_number"]');
       const previousRoom = {{ user_booking.number if user_booking else 'null' }};
-      
-      roomTypeSelect.addEventListener('change', ()=>{
+      roomTypeSelect.addEventListener('change',()=>{
         const type = roomTypeSelect.value;
-        roomNumberSelect.innerHTML = '';
+        roomNumberSelect.innerHTML='';
         const placeholder = document.createElement('option');
-        placeholder.value = '';
-        placeholder.textContent = 'Select Floor & Room';
-        placeholder.disabled = true;
-        placeholder.selected = true;
+        placeholder.value=''; placeholder.textContent='Select Floor & Room';
+        placeholder.disabled=true; placeholder.selected=true;
         roomNumberSelect.appendChild(placeholder);
-
         roomNumbers[type].forEach(num=>{
           const option = document.createElement('option');
           const floor = Math.floor(num/100);
           const suffix = floor===1?'st':floor===2?'nd':floor===3?'rd':'th';
-          option.value = num;
-          option.textContent = `${floor}${suffix} Floor - Room ${num}`;
-          if(num===previousRoom) option.selected = true;
-          if(bookedRooms.includes(num) && num!==previousRoom){
-            option.disabled = true;
-            option.textContent += " (Booked)";
-          }
+          option.value=num;
+          option.textContent=`${floor}${suffix} Floor - Room ${num}`;
+          if(num===previousRoom) option.selected=true;
+          if(bookedRooms.includes(num)&&num!==previousRoom){option.disabled=true;option.textContent+=' (Booked)';}
           roomNumberSelect.appendChild(option);
         });
       });
+
+      editForm.addEventListener('submit',e=>{
+        e.preventDefault();
+        fetch("{{ url_for('edit_booking') }}",{method:'POST',body:new FormData(editForm)})
+          .then(r=>r.json())
+          .then(d=>{ popup.className=d.status==='success'?'popup success':'popup error'; popupMessage.textContent=d.message; popup.style.display='block'; })
+          .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Update failed!'; popup.style.display='block'; });
+      });
     }
 
-    const forms = document.querySelectorAll('.bookingForm');
-    const popup = document.getElementById('popup');
-    const popupMessage = document.getElementById('popupMessage');
-
-    forms.forEach(form => {
-      form.addEventListener('submit', e=>{
-        e.preventDefault();
-        const formData = new FormData(form);
-        fetch("{{ url_for('book_room') }}", {method:'POST', body: formData})
-        .then(res=>res.json())
-        .then(data=>{
-          popup.className = data.status==='success'?'popup success':'popup error';
-          popupMessage.textContent = data.message;
-          popup.style.display='block';
-        })
-        .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Something went wrong!'; popup.style.display='block'; });
+    /* ---- DELETE BOOKING ---- */
+    function deleteBooking(){
+      if(!confirm('Are you sure you want to cancel this booking?')) return;
+      fetch("{{ url_for('delete_booking') }}",{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({room:{{ user_booking.number if user_booking else 'null' }}})
+      })
+      .then(r=>r.json())
+      .then(d=>{
+        popup.className=d.status==='success'?'popup success':'popup error';
+        popupMessage.textContent=d.message;
+        popup.style.display='block';
+        if(d.status==='success') setTimeout(()=>location.reload(),1200);
+      })
+      .catch(()=>{
+        popup.className='popup error'; popupMessage.textContent='Delete failed!'; popup.style.display='block';
       });
+    }
+
+    /* ---- PAYMENT / OTP  ---- */
+    const paymentMethodSelect = document.getElementById('paymentMethod');
+    const otpInput = document.getElementById('otpInput');
+    if(paymentMethodSelect){
+      paymentMethodSelect.addEventListener('change',async()=>{
+        const method = paymentMethodSelect.value;
+        if(method==='cash'){otpInput.value=''; return;}
+        try{
+          const res = await fetch("{{ url_for('generate_otp') }}",{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({payment_method:method})});
+          const data = await res.json();
+          if(data.status==='success'){
+            otpCodeBox.textContent=data.otp;
+            startOtpCountdown(30);
+            document.getElementById('otpModalOverlay').style.display='flex';
+            document.getElementById('otpModalInput').focus();
+          }else{alert('Could not generate OTP');}
+        }catch{alert('Error generating OTP');}
+      });
+    }
+
+    document.querySelector('.payNowBtn')?.addEventListener('click',()=>{
+      const method = paymentMethodSelect.value;
+      const otp    = otpInput.value.trim();
+      const room   = {{ user_booking.number if user_booking else 'null' }};
+      if(!method){alert('Select payment method'); return;}
+      if(method!=='cash' && !otp){alert('OTP required'); return;}
+      fetch("{{ url_for('user_pay_booking') }}",{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({room:room,payment_method:method,otp:otp})})
+        .then(r=>r.json())
+        .then(d=>{ popup.className=d.status==='success'?'popup success':'popup error'; popupMessage.textContent=d.message; popup.style.display='block'; })
+        .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Payment failed!'; popup.style.display='block'; });
     });
 
-    if(editForm){
-      editForm.addEventListener('submit', e=>{
-        e.preventDefault();
-        const formData = new FormData(editForm);
-        fetch("{{ url_for('edit_booking') }}", {method:'POST', body: formData})
-        .then(res=>res.json())
-        .then(data=>{
-          popup.className = data.status==='success'?'popup success':'popup error';
-          popupMessage.textContent = data.message;
-          popup.style.display='block';
-        })
-        .catch(()=>{ popup.className='popup error'; popupMessage.textContent='Error updating booking!'; popup.style.display='block'; });
-      });
-    }
+    /* ---- GALLERY ---- */
+    let modalIndex=0;
+    const modal=document.getElementById('galleryModal');
+    const modalImg=document.getElementById('galleryImg');
+    const galleryImages=document.querySelectorAll('.gallery-img');
+    galleryImages.forEach((img,i)=>img.addEventListener('click',()=>{modalIndex=i;modal.style.display='block';modalImg.src=img.src;}));
+    function closeModal(){modal.style.display='none';}
+    function changeSlide(n){modalIndex+=n;if(modalIndex<0)modalIndex=galleryImages.length-1;if(modalIndex>=galleryImages.length)modalIndex=0;modalImg.src=galleryImages[modalIndex].src;}
 
-    function closePopup(){ popup.style.display='none'; location.reload(); }
-
-    // Pay Now Function
-
-    function payNow(booking_id){
-  const roomType = "{{ user_booking.room_type }}";
-  const checkIn = new Date("{{ user_booking.check_in }}");
-  const checkOut = new Date("{{ user_booking.check_out }}");
-
-  const prices = { "Executive": 5000, "Deluxe": 3500, "Standard": 2500, "Family": 4500 };
-  const nights = Math.ceil((checkOut - checkIn) / (1000 * 60 * 60 * 24));
-  const total = nights * (prices[roomType] || 0);
-
-  document.getElementById("popupRoomType").innerText = "Room Type: " + roomType;
-  document.getElementById("popupDates").innerText =
-    "Check-in: " + checkIn.toLocaleDateString() + " | Check-out: " + checkOut.toLocaleDateString();
-  document.getElementById("popupNights").innerText = "Nights: " + nights;
-  document.getElementById("popupTotal").innerText = "Total: ₱" + total.toLocaleString();
-
-  const popup = document.getElementById("payPopup");
-  const paymentMethodSelect = document.getElementById("paymentMethod");
-  const authSection = document.getElementById("authSection");
-  const authCodeInput = document.getElementById("authCodeInput");
-  const authMessage = document.getElementById("authMessage");
-  const confirmBtn = document.getElementById("confirmPay");
-
-  let generatedCode = "";
-  let timer;
-
-  function generateOTP(){
-    generatedCode = Math.floor(100000 + Math.random() * 900000);
-    authSection.style.display = "block";
-    authCodeInput.value = "";
-    confirmBtn.disabled = false;
-
-    let timeLeft = 30;
-    authMessage.innerText = `Authentication Code: ${generatedCode} (Expires in ${timeLeft}s)`;
-
-    clearInterval(timer);
-    timer = setInterval(()=>{
-      timeLeft--;
-      if(timeLeft > 0){
-        authMessage.innerText = `Authentication Code: ${generatedCode} (Expires in ${timeLeft}s)`;
-      } else {
-        authMessage.innerText = "Authentication code expired! Select method again.";
-        confirmBtn.disabled = true;
-        clearInterval(timer);
-      }
-    }, 1000);
-  }
-
-  // Reset popup
-  paymentMethodSelect.value = "";
-  authSection.style.display = "none";
-  authCodeInput.value = "";
-  confirmBtn.disabled = false;
-
-  popup.style.display = "block";
-
-  paymentMethodSelect.onchange = function(){
-    if(this.value !== "Cash"){
-      generateOTP();
-    } else {
-      authSection.style.display = "none";
-      clearInterval(timer);
-      confirmBtn.disabled = false;
-    }
-  };
-
-  confirmBtn.onclick = () => {
-    const method = paymentMethodSelect.value;
-    if(!method){
-      alert("Please select a payment method.");
-      return;
-    }
-    if(method !== "Cash"){
-      const inputCode = authCodeInput.value.trim();
-      if(inputCode !== generatedCode.toString()){
-        alert("Invalid or expired authentication code!");
-        return;
-      }
-      clearInterval(timer);
-    }
-
-    fetch("/user_pay_booking", {
-      method: "POST",
-      headers: { "Content-Type": "application/x-www-form-urlencoded" },
-      body: `id=${booking_id}&method=${method}`
-    })
-    .then(res => res.json())
-    .then(data => {
-      alert(data.message);
-      if (data.status === "success") {
-        document.getElementById("paymentStatus").innerText = "Paid";
-        popup.style.display = "none";
-      }
-    })
-    .catch(err => console.error(err));
-  };
-
-  document.getElementById("cancelPay").onclick = () => {
-    popup.style.display = "none";
-    clearInterval(timer);
-  };
-}
-
-
-    // Gallery modal
-    const modal = document.getElementById('galleryModal');
-    const modalImg = document.getElementById('galleryImg');
-    const galleryImgs = document.querySelectorAll('.gallery-img');
-    const galleryData = {
-      "Executive": ["executive.jpg","executive1.jpg","executive2.jpg","executive3.jpg"],
-      "Deluxe": ["deluxe.jpg","deluxe1.jpg","deluxe2.jpg","deluxe3.jpg"],
-      "Standard": ["standard.jpg","standard1.jpg","standard2.jpg","standard3.jpg"],
-      "Family": ["family.jpg","family1.jpg","family2.jpg","family3.jpg"]
-    };
-    let currentImages=[], currentIndex=0;
-    galleryImgs.forEach(img=>{
-      img.addEventListener('click', ()=>{
-        const type = img.dataset.type;
-        currentImages = galleryData[type].map(i=>"{{ url_for('static', filename='') }}"+i);
-        currentIndex = 0;
-        openModal();
-      });
-    });
-    function openModal(){ modal.style.display="block"; modalImg.src=currentImages[currentIndex]; }
-    function closeModal(){ modal.style.display="none"; }
-    function changeSlide(n){ currentIndex=(currentIndex+n+currentImages.length)%currentImages.length; modalImg.src=currentImages[currentIndex]; }
-  
-      <!-- (your existing scripts, functions, etc.) -->
-  </script>
-
-  <!-- ✅ ADD THIS NEW POPUP CODE BELOW -->
-  <div id="payPopup" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%);
-     background:#111; border:2px solid #d4af37; border-radius:15px; box-shadow:0 0 25px #ffd700;
-     padding:25px; width:350px; color:#fff; z-index:300;">
-  <h3 style="color:#ffd700; text-align:center;">Confirm Payment</h3>
-  <p id="popupRoomType"></p>
-  <p id="popupDates"></p>
-  <p id="popupNights"></p>
-  <p id="popupTotal"></p>
-  
-  <label for="paymentMethod">Select Payment Method:</label>
-  <select id="paymentMethod" style="width:100%; padding:8px; margin:5px 0; border-radius:6px; background:#222; color:#fff;">
-    <option value="" disabled selected>Select Method</option>
-    <option value="Cash">Cash</option>
-    <option value="Gcash">Gcash</option>
-    <option value="Paymaya">Paymaya</option>
-    <option value="Credit Card">Credit Card</option>
-    <option value="Debit Card">Debit Card</option>
-  </select>
-
-  <div id="authSection" style="display:none; margin-top:10px; text-align:center;">
-    <p id="authMessage" style="color:#ffd700; font-weight:bold;">Authentication Code Sent!</p>
-    <input type="text" id="authCodeInput" placeholder="Enter Code" style="padding:6px 10px; border-radius:5px; border:none; width:80%; text-align:center;">
-  </div>
-
-  <div style="text-align:center; margin-top:15px;">
-    <button id="confirmPay" style="background:#ffd700; color:#000; border:none; padding:8px 16px;
-      border-radius:6px; font-weight:bold; cursor:pointer;">Confirm</button>
-    <button id="cancelPay" style="background:#555; color:#fff; border:none; padding:8px 16px;
-      border-radius:6px; margin-left:10px; cursor:pointer;">Cancel</button>
-  </div>
-</div>
-
-
-
-  <script>
-    // ✅ Enhanced Pay Now Popup Script
-    
-let selectedBookingId = null;
-let selectedRoomNumber = null;
-let generatedOTP = null;
-
-function payNow(booking_id, room_number){
-  selectedBookingId = booking_id;
-  selectedRoomNumber = room_number;
-  document.getElementById("payRoomNumber").innerText = room_number;
-  document.getElementById("paymentMethod").value = "Cash";
-  document.getElementById("otpDiv").style.display = "none";
-  document.getElementById("otpInput").value = "";
-  document.getElementById("paymentModal").style.display = "block";
-}
-
-// Show OTP input if method is not cash
-document.getElementById("paymentMethod").addEventListener("change", function(){
-  if(this.value.toLowerCase() !== "cash"){
-    generatedOTP = Math.floor(100000 + Math.random()*900000);
-    alert("Authentication OTP: " + generatedOTP);
-    document.getElementById("otpDiv").style.display = "block";
-  } else {
-    generatedOTP = null;
-    document.getElementById("otpDiv").style.display = "none";
-  }
-});
-
-function closePaymentModal(){
-  document.getElementById("paymentModal").style.display = "none";
-}
-
-function confirmPayment(){
-  const method = document.getElementById("paymentMethod").value;
-  let enteredOTP = document.getElementById("otpInput").value;
-
-  if(method.toLowerCase() !== "cash" && enteredOTP != generatedOTP){
-    return alert("Incorrect OTP!");
-  }
-
-  fetch("/user_pay_booking", {
-    method: "POST",
-    headers: {"Content-Type":"application/x-www-form-urlencoded"},
-    body: `id=${selectedBookingId}&room_number=${selectedRoomNumber}&method=${method}&otp=${enteredOTP||''}`
-  })
-  .then(res => res.json())
-  .then(resp => {
-    alert(resp.message);
-    if(resp.status === "success"){
-      document.getElementById("paymentStatus").innerText = "Paid";
-      location.reload();
-    }
-  })
-  .catch(err => console.error(err));
-
-  closePaymentModal();
-}
-
-// Close modal when clicking outside content
-window.onclick = function(event) {
-  const modal = document.getElementById("paymentModal");
-  if (event.target == modal) {
-    modal.style.display = "none";
-  }
-}
-
-
-  else {
-    // Non-cash: generate OTP
-    const otp = Math.floor(100000 + Math.random() * 900000); // 6-digit code
-    const enteredOtp = prompt(`Authentication required!\nYour OTP: ${otp}\nPlease enter the OTP to confirm payment:`);
-
-    if (enteredOtp != otp) {
-      alert("Authentication failed! Payment cancelled.");
-      return;
-    }
-
-    // OTP confirmed, send payment
-    fetch("/user_pay_booking", {
-      method: "POST",
-      headers: {"Content-Type":"application/x-www-form-urlencoded"},
-      body: `id=${booking_id}&method=${method}&room_number={{ user_booking.number }}`
-    })
-    .then(res => res.json())
-    .then(resp => {
-      alert(resp.message);
-      if(resp.status === "success") {
-        document.getElementById("paymentStatus").innerText = "Paid";
-      }
-    })
-    .catch(err => console.error(err));
-  }
-}
-
-<!-- Payment Modal -->
-<div class="popup" id="paymentModal">
-  <h3>Payment</h3>
-  <label for="paymentMethod">Select Payment Method:</label>
-  <select id="paymentMethod">
-    <option value="" disabled selected>Select Method</option>
-    <option value="Cash">Cash</option>
-    <option value="Gcash">Gcash</option>
-    <option value="Paymaya">Paymaya</option>
-    <option value="Credit Card">Credit Card</option>
-    <option value="Debit Card">Debit Card</option>
-  </select>
-  <div id="otpContainer" style="display:none; margin-top:10px;">
-    <label for="otpInput">Enter OTP:</label>
-    <input type="text" id="otpInput" placeholder="6-digit OTP">
-  </div>
-  <button id="confirmPayment">Confirm Payment</button>
-  <button onclick="closePaymentModal()" style="margin-top:5px;">Cancel</button>
-</div>
-
-let currentBookingId = null;
-let currentRoomNumber = null;
-let generatedOTP = null;
-
-// Open modal
-function payNow(booking_id, room_number){
-  currentBookingId = booking_id;
-  currentRoomNumber = room_number;
-
-  document.getElementById("payRoomNumber").innerText = room_number;
-  document.getElementById("paymentMethod").value = "";
-  document.getElementById("otpDiv").style.display = "none";
-  document.getElementById("otpInput").value = "";
-  generatedOTP = null;
-
-  document.getElementById("paymentModal").style.display = "block";
-}
-
-// Close modal
-function closePaymentModal(){
-  document.getElementById("paymentModal").style.display = "none";
-}
-
-// Show OTP if method is not cash
-document.getElementById("paymentMethod").addEventListener("change", function(){
-  if(this.value !== "Cash"){
-    generatedOTP = Math.floor(100000 + Math.random() * 900000);
-    alert("Authentication OTP: " + generatedOTP);
-    document.getElementById("otpDiv").style.display = "block";
-  } else {
-    generatedOTP = null;
-    document.getElementById("otpDiv").style.display = "none";
-  }
-});
-
-// Confirm payment
-function confirmPayment(){
-  const method = document.getElementById("paymentMethod").value;
-  if(!method){
-    alert("Please select a payment method.");
-    return;
-  }
-
-  // If non-cash, verify OTP
-  if(method !== "Cash"){
-    const enteredOTP = document.getElementById("otpInput").value.trim();
-    if(enteredOTP !== generatedOTP.toString()){
-      alert("Invalid OTP! Payment cancelled.");
-      return;
-    }
-  }
-
-  // Send payment request with room number
-  fetch("/user_pay_booking", {
-    method: "POST",
-    headers: {"Content-Type": "application/x-www-form-urlencoded"},
-    body: `id=${currentBookingId}&room_number=${currentRoomNumber}&method=${method}&otp=${generatedOTP||''}`
-  })
-  .then(res => res.json())
-  .then(resp => {
-    alert(resp.message);
-    if(resp.status === "success"){
-      document.getElementById("paymentStatus").innerText = "Paid";
-      location.reload();
-    }
-  })
-  .catch(err => console.error(err));
-
-  closePaymentModal();
-}
-
-function closePaymentModal() {
-  document.getElementById("paymentModal").style.display = "none";
-}
-
-<div id="paymentModal" class="modal">
-  <div class="modal-content" style="background:#111; padding:30px; border-radius:15px; max-width:400px; text-align:center; color:#fff;">
-    <span class="close" onclick="closePaymentModal()">&times;</span>
-    <h2>Confirm Payment</h2>
-    <p>Room Number: <span id="payRoomNumber"></span></p>
-    <label for="paymentMethod">Select Payment Method:</label>
-    <select id="paymentMethod">
-      <option value="" disabled selected>Select Method</option>
-      <option value="Cash">Cash</option>
-      <option value="Gcash">Gcash</option>
-      <option value="Paymaya">Paymaya</option>
-      <option value="Credit Card">Credit Card</option>
-      <option value="Debit Card">Debit Card</option>
-    </select>
-    <div id="otpDiv" style="display:none; margin-top:15px;">
-      <p>Enter OTP:</p>
-      <input type="text" id="otpInput" placeholder="6-digit OTP" style="width:100%; padding:8px; border-radius:6px; border:none; background:#222; color:#fff;">
-    </div>
-    <button style="margin-top:20px; width:100%;" onclick="confirmPayment()">Confirm</button>
-  </div>
-    <button style="margin-top:20px; width:100%;" onclick="confirmPayment()">Confirm</button>
-
-     <button onclick="payNow({{ user_booking.id }}, {{ user_booking.number }})" class="btn-warning">Pay Now</button>
-  </div>
-</div>
-
+    /* ---- BOOK ANOTHER (simple reload) ---- */
+    function bookAnother(){location.reload();}
   </script>
 </body>
 </html>
